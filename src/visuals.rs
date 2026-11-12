@@ -11,6 +11,7 @@ use bevy::prelude::*;
 
 use crate::bike::{Bike, BikeState, BikeTuning, Wheel};
 use crate::course::{LevelRoot, StaticSpikes};
+use crate::effects::{CourseEffect, EffectKind, RideEffects, cactus_parts};
 use crate::level::{Level, SPIKE_HEIGHT, SPIKE_WIDTH, Spikes, TrapKind};
 use crate::physics::{Pose, PreviousPose};
 use crate::progress::{ActivePlayer, Grave, Profiles};
@@ -103,6 +104,18 @@ struct TntCrate;
 #[derive(Component, Debug)]
 struct TntBlast;
 
+#[derive(Component)]
+struct TntFuse;
+
+#[derive(Component)]
+struct MovingHazard;
+
+#[derive(Component)]
+struct JetFlame;
+
+#[derive(Component)]
+struct EffectVisual;
+
 pub struct VisualsPlugin;
 
 impl Plugin for VisualsPlugin {
@@ -114,6 +127,7 @@ impl Plugin for VisualsPlugin {
                     draw_scenery,
                     draw_static_spikes,
                     draw_traps,
+                    draw_effects,
                     draw_finish,
                     draw_bike,
                     draw_wheels,
@@ -124,7 +138,14 @@ impl Plugin for VisualsPlugin {
             )
             .add_systems(
                 PostUpdate,
-                (follow_poses, face_bike, tint_crash, animate_tnt)
+                (
+                    follow_poses,
+                    face_bike,
+                    tint_crash,
+                    animate_tnt,
+                    animate_effects,
+                    animate_movers,
+                )
                     .before(TransformSystems::Propagate)
                     .before(crate::camera::CameraSystems),
             );
@@ -328,7 +349,7 @@ fn draw_traps(
                     Transform::default(),
                 ));
             }
-            TrapKind::FallingPillar { pillar, .. } => {
+            TrapKind::FallingPillar { pillar, .. } | TrapKind::RisingPillar { pillar, .. } => {
                 commands.spawn((
                     VisualOf(entity),
                     Follow {
@@ -338,6 +359,65 @@ fn draw_traps(
                     Sprite::from_color(palette::ROCK, pillar.size()),
                     Transform::default(),
                 ));
+            }
+            TrapKind::Raven { from, .. } => {
+                commands
+                    .spawn((
+                        VisualOf(entity),
+                        MovingHazard,
+                        Follow {
+                            base: from,
+                            z: layer::TRAP,
+                        },
+                        Transform::default(),
+                        Visibility::default(),
+                    ))
+                    .with_children(|parent| {
+                        parent.spawn((
+                            Mesh2d(meshes.add(Circle::new(12.0))),
+                            MeshMaterial2d(materials.add(palette::TYRE)),
+                            Transform::default(),
+                        ));
+                        for side in [-1.0, 1.0] {
+                            parent.spawn(bar(
+                                palette::TYRE,
+                                Vec2::ZERO,
+                                Vec2::new(side * 22.0, 16.0),
+                                7.0,
+                                0.1,
+                            ));
+                        }
+                        parent.spawn((
+                            Mesh2d(meshes.add(Triangle2d::new(
+                                Vec2::new(-9.0, 4.0),
+                                Vec2::new(-22.0, -1.0),
+                                Vec2::new(-9.0, -5.0),
+                            ))),
+                            MeshMaterial2d(materials.add(palette::CHECKPOINT)),
+                            Transform::from_xyz(0.0, 0.0, 0.2),
+                        ));
+                    });
+            }
+            TrapKind::Ball { start, radius, .. } => {
+                commands
+                    .spawn((
+                        VisualOf(entity),
+                        MovingHazard,
+                        Follow {
+                            base: start,
+                            z: layer::TRAP,
+                        },
+                        Mesh2d(meshes.add(Circle::new(radius))),
+                        MeshMaterial2d(materials.add(palette::ROCK)),
+                        Transform::default(),
+                    ))
+                    .with_child(bar(
+                        palette::SPIKE,
+                        Vec2::new(-radius * 0.7, 0.0),
+                        Vec2::new(radius * 0.7, 0.0),
+                        5.0,
+                        0.1,
+                    ));
             }
             TrapKind::Tnt {
                 crate_box,
@@ -361,6 +441,17 @@ fn draw_traps(
                     ));
                 commands.spawn((
                     VisualOf(entity),
+                    TntFuse,
+                    sprite(
+                        palette::BLAST,
+                        Vec2::new(6.0, 20.0),
+                        Vec2::new(crate_box.center().x, crate_box.max.y + 10.0),
+                        layer::TRAP,
+                    ),
+                    Visibility::Hidden,
+                ));
+                commands.spawn((
+                    VisualOf(entity),
                     TntBlast,
                     Mesh2d(meshes.add(Circle::new(blast_radius))),
                     MeshMaterial2d(materials.add(palette::BLAST)),
@@ -370,6 +461,128 @@ fn draw_traps(
             }
             TrapKind::JumpingFinish { .. } => {}
         }
+    }
+}
+
+fn draw_effects(
+    mut commands: Commands,
+    effects: Query<(Entity, &CourseEffect), Added<CourseEffect>>,
+) {
+    for (entity, effect) in &effects {
+        let zone = effect.def.zone;
+        let center = zone.center();
+        let size = zone.size();
+        commands
+            .spawn((
+                VisualOf(entity),
+                EffectVisual,
+                Transform::from_translation(center.extend(layer::TRAP)),
+                Visibility::default(),
+            ))
+            .with_children(|parts| match effect.def.kind {
+                EffectKind::Cactus => {
+                    for part in cactus_parts(zone) {
+                        parts.spawn(sprite(
+                            palette::FINISH,
+                            part.size(),
+                            part.center() - center,
+                            0.0,
+                        ));
+                    }
+                }
+                EffectKind::Mud => {
+                    parts.spawn(sprite(palette::GROUND, size, Vec2::ZERO, 0.0));
+                    for i in 0..5 {
+                        let x = -size.x * 0.4 + i as f32 * size.x * 0.2;
+                        parts.spawn(bar(
+                            palette::SLAB,
+                            Vec2::new(x - 8.0, 0.0),
+                            Vec2::new(x + 8.0, 3.0),
+                            3.0,
+                            0.1,
+                        ));
+                    }
+                }
+                EffectKind::Trampoline { velocity } => {
+                    parts.spawn(sprite(palette::HIGHLIGHT, size, Vec2::ZERO, 0.0));
+                    for x in [-size.x * 0.35, size.x * 0.35] {
+                        parts.spawn(bar(
+                            palette::POLE,
+                            Vec2::new(x - 8.0, -size.y * 0.5),
+                            Vec2::new(x + 8.0, size.y * 0.5),
+                            3.0,
+                            0.1,
+                        ));
+                    }
+                    let end = velocity.normalize_or_zero() * 38.0 + Vec2::Y * 20.0;
+                    parts.spawn(bar(palette::HIGHLIGHT, Vec2::Y * 20.0, end, 4.0, 0.1));
+                    parts.spawn(bar(
+                        palette::HIGHLIGHT,
+                        end,
+                        end - Vec2::new(12.0, 4.0),
+                        4.0,
+                        0.1,
+                    ));
+                    parts.spawn(bar(
+                        palette::HIGHLIGHT,
+                        end,
+                        end - Vec2::new(0.0, 12.0),
+                        4.0,
+                        0.1,
+                    ));
+                }
+                EffectKind::Jet => {
+                    parts.spawn(sprite(palette::HIGHLIGHT, size, Vec2::ZERO, 0.0));
+                    parts.spawn((
+                        label("JET", 17.0, palette::TEXT),
+                        Transform::from_xyz(0.0, 0.0, 0.1),
+                    ));
+                    for x in [-12.0, 12.0] {
+                        parts.spawn(sprite(
+                            palette::HUB,
+                            Vec2::new(8.0, 14.0),
+                            Vec2::new(x, -size.y * 0.5 - 5.0),
+                            0.1,
+                        ));
+                    }
+                }
+            });
+    }
+}
+
+#[allow(clippy::type_complexity)]
+fn animate_effects(
+    effects: Query<&CourseEffect>,
+    riders: Query<&RideEffects>,
+    mut visuals: Query<
+        (&VisualOf, &mut Visibility, Has<JetFlame>),
+        Or<(With<EffectVisual>, With<JetFlame>)>,
+    >,
+) {
+    for (target, mut visibility, flame) in &mut visuals {
+        let show = if flame {
+            riders.get(target.0).is_ok_and(|r| r.jet_active)
+        } else {
+            effects.get(target.0).is_ok_and(|e| !e.spent)
+        };
+        *visibility = if show {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+    }
+}
+
+fn animate_movers(
+    traps: Query<&Trap>,
+    mut visuals: Query<(&VisualOf, &mut Visibility), With<MovingHazard>>,
+) {
+    for (target, mut visibility) in &mut visuals {
+        *visibility = if traps.get(target.0).is_ok_and(|t| !t.departed()) {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
     }
 }
 
@@ -413,6 +626,22 @@ fn draw_bike(
         ));
         let helmet_material = materials.add(palette::HELMET);
         let horn_material = materials.add(palette::HORN);
+        commands.spawn((
+            VisualOf(entity),
+            JetFlame,
+            Follow {
+                base: Vec2::new(0.0, -30.0),
+                z: layer::BIKE - 0.1,
+            },
+            Mesh2d(meshes.add(Triangle2d::new(
+                Vec2::new(-12.0, 0.0),
+                Vec2::new(12.0, 0.0),
+                Vec2::new(0.0, -35.0),
+            ))),
+            MeshMaterial2d(materials.add(palette::BLAST)),
+            Transform::default(),
+            Visibility::Hidden,
+        ));
         let root = commands
             .spawn((
                 VisualOf(entity),
@@ -736,10 +965,12 @@ fn tint_crash(
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn animate_tnt(
     traps: Query<(&Trap, &Visuals)>,
     mut crates: Query<&mut Visibility, (With<TntCrate>, Without<TntBlast>)>,
     mut blasts: Query<(&mut Visibility, &mut Transform), With<TntBlast>>,
+    mut fuses: Query<&mut Visibility, (With<TntFuse>, Without<TntCrate>, Without<TntBlast>)>,
 ) {
     for (trap, visuals) in &traps {
         let TrapKind::Tnt { crate_box, .. } = trap.def.kind else {
@@ -747,6 +978,13 @@ fn animate_tnt(
         };
         let exploded = trap.exploded();
         for visual in visuals.iter() {
+            if let Ok(mut visibility) = fuses.get_mut(visual) {
+                *visibility = if trap.fired.is_some() && !exploded {
+                    Visibility::Inherited
+                } else {
+                    Visibility::Hidden
+                };
+            }
             if let Ok(mut visibility) = crates.get_mut(visual) {
                 visibility.set_if_neq(if exploded {
                     Visibility::Hidden
@@ -764,8 +1002,8 @@ fn animate_tnt(
                 } else {
                     Visibility::Hidden
                 };
-                let grow = progress.map_or(0.0, |p| 0.4 + 0.6 * p);
-                transform.scale = Vec3::splat(grow.max(0.01));
+                // The visible disc matches the full active blast radius.
+                transform.scale = Vec3::ONE;
                 transform.translation = crate_box.center().extend(transform.translation.z);
             }
         }

@@ -32,7 +32,8 @@ Your gravestone marks the farthest place you crashed, next to everyone else's.
 | Gas (in the direction the bike faces) | W or Up | Right trigger |
 | Brake | S or Down | Left trigger |
 | Tilt left / right (spin in the air for flips) | A / D or Left / Right | Left stick or D-pad |
-| Jump | Space | South (A / Cross) |
+| Jump / escape a cactus | Space | South (A / Cross) |
+| Jet thrust (while fuel remains) | Hold Space | Hold South |
 | Turn around | E | West (X / Square) |
 | Restart the level | R | Select |
 | Next level after the finish | Enter | South |
@@ -42,6 +43,11 @@ Riding keys are physical positions, so WASD and E stay in place on any keyboard
 layout. In the air the bike slowly rights itself when no tilt key is held, and on
 the ground it never leans far enough to flip over. Escape on the player selection
 quits.
+
+The third level, **Fallen & Flugstunden**, introduces cactus, mud, diving ravens,
+rising blocks, rolling and bouncing balls, trampolines, and short jet flights.
+Traps can combine: one trampoline throws you into a cactus. Jump to escape, and
+release the jet button to save fuel. Checkpoints reset traps and restore pickups.
 
 Progress is saved in `moto-devil/progress.txt` in your data directory
 (`~/.local/share` on Linux). Edit or delete that file to rename or remove players.

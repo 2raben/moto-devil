@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 
+use crate::effects::{JET_SECONDS, RideEffects};
 use crate::flow::{CurrentLevel, Levels, Screen};
 use crate::level::Level;
 use crate::progress::{ActivePlayer, Profiles};
@@ -21,6 +22,15 @@ struct Cue;
 #[derive(Component)]
 struct FinishPanel;
 
+#[derive(Component)]
+struct EffectPanel;
+#[derive(Component)]
+struct EffectText;
+#[derive(Component)]
+struct JetBar;
+#[derive(Component)]
+struct JetGauge;
+
 pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
@@ -34,7 +44,10 @@ impl Plugin for HudPlugin {
             warn!("Could not replace the default font");
         }
         app.add_systems(OnEnter(Screen::Playing), spawn_hud)
-            .add_systems(Update, show_run.run_if(in_state(Screen::Playing)));
+            .add_systems(
+                Update,
+                (show_run, show_effects).run_if(in_state(Screen::Playing)),
+            );
     }
 }
 
@@ -65,6 +78,42 @@ fn panel(node: Node) -> impl Bundle {
 }
 
 fn spawn_hud(mut commands: Commands) {
+    commands
+        .spawn((
+            Name::new("Bike effects"),
+            EffectPanel,
+            DespawnOnExit(Screen::Playing),
+            panel(Node {
+                top: Val::Px(54.0),
+                left: Val::Px(10.0),
+                flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(6.0),
+                ..default()
+            }),
+            Visibility::Hidden,
+        ))
+        .with_children(|parent| {
+            parent.spawn((EffectText, text("", 16.0)));
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(200.0),
+                        height: Val::Px(8.0),
+                        ..default()
+                    },
+                    BackgroundColor(palette::ROCK),
+                    JetGauge,
+                ))
+                .with_child((
+                    JetBar,
+                    Node {
+                        width: Val::Percent(0.0),
+                        height: Val::Percent(100.0),
+                        ..default()
+                    },
+                    BackgroundColor(palette::HIGHLIGHT),
+                ));
+        });
     commands.spawn((
         Name::new("Progress"),
         Progress,
@@ -119,6 +168,51 @@ fn spawn_hud(mut commands: Commands) {
         TextLayout::justify(Justify::Center),
         Visibility::Hidden,
     ));
+}
+
+fn show_effects(
+    bikes: Query<&RideEffects>,
+    mut panels: Query<&mut Visibility, With<EffectPanel>>,
+    mut labels: Query<&mut Text, With<EffectText>>,
+    mut bars: Query<&mut Node, (With<JetBar>, Without<JetGauge>)>,
+    mut gauges: Query<&mut Node, (With<JetGauge>, Without<JetBar>)>,
+) {
+    let ride = bikes.iter().next();
+    let mut messages = Vec::new();
+    if let Some(ride) = ride {
+        if ride.stuck.is_some() {
+            messages.push("Kaktus! Springen befreit dich.".to_string());
+        }
+        if ride.muddy {
+            messages.push("Matsch: neuer Anlauf nötig".to_string());
+        }
+        if ride.jet_left > 0.0 {
+            messages.push(format!(
+                "Jet {} s · Leertaste / Süd halten zum Fliegen",
+                seconds(ride.jet_left)
+            ));
+        }
+    }
+    for mut v in &mut panels {
+        *v = if messages.is_empty() {
+            Visibility::Hidden
+        } else {
+            Visibility::Inherited
+        };
+    }
+    for mut text in &mut labels {
+        text.0 = messages.join("\n");
+    }
+    for mut node in &mut gauges {
+        node.display = if ride.is_some_and(|r| r.jet_left > 0.0) {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+    for mut node in &mut bars {
+        node.width = Val::Percent(100.0 * ride.map_or(0.0, |r| r.jet_left / JET_SECONDS));
+    }
 }
 
 /// Seconds with one decimal and a decimal comma, as written in German.

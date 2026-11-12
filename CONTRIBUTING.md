@@ -97,6 +97,11 @@ Check the affected behavior manually:
 - Level 2: the slab drops, the loop can be ridden at full gas, the spikes after the
   loop pop up, the checkpoint moves the respawn point, the pillar falls and rises,
   TNT explodes, and the finish jumps behind the bike.
+- Level 3: cactus holds the bike until a jump, mud slows it, ravens dive, blocks
+  move in both directions, balls roll/bounce, and the plate falls away. The first
+  trampoline clears a pit; the second lands in a cactus that a jump escapes.
+  Jet pickups give two seconds of thrust on held Space/South; releasing saves
+  fuel. Check the bar/flames, both wide pits, and reset from both checkpoints.
 - A crash shows "Autsch!", the bike respawns quickly, and the player's gravestone
   appears where they crashed farthest. Gravestones of other players show with their
   names; after quitting and restarting the game, they are still there.
@@ -106,6 +111,19 @@ Check the affected behavior manually:
 
 Record what was checked; if no graphical environment is available, report that
 limitation.
+
+Optional Linux GPU captures exercise the actual simulation, visuals and HUD with
+scripted controls. They need a working display/GPU, use a hidden window and no
+save file, and must each run in a separate process (one winit event loop per
+process). Inside `nix-shell`, use:
+
+```sh
+TMPDIR=/tmp cargo test --locked tests::rendered::capture_trampoline_cactus -- --ignored --exact
+TMPDIR=/tmp cargo test --locked tests::rendered::capture_jet -- --ignored --exact
+```
+
+Inspect `/tmp/moto-devil-trampoline-cactus.png` and `/tmp/moto-devil-jet.png`.
+These are capture smoke tests, not pixel baselines or a physical controller test.
 
 For documentation-only changes, verify relative links and claims against source,
 then run `git diff --check`; a full Rust build is unnecessary. Report checks

@@ -45,6 +45,7 @@ fn sample_controls(
     let mut throttle = held(GAS);
     let mut brake = held(BRAKE);
     let mut tilt = held(RIGHT) - held(LEFT);
+    let mut jump_held = keys.pressed(KeyCode::Space);
     let mut jump = pressed(&[KeyCode::Space]);
     let mut turn = pressed(&[KeyCode::KeyE]);
     let mut restart = pressed(&[KeyCode::KeyR]);
@@ -56,6 +57,7 @@ fn sample_controls(
             tilt += stick;
         }
         tilt += pad.dpad().x;
+        jump_held |= pad.pressed(GamepadButton::South);
         jump |= pad.just_pressed(GamepadButton::South);
         turn |= pad.just_pressed(GamepadButton::West);
         restart |= pad.just_pressed(GamepadButton::Select);
@@ -66,6 +68,7 @@ fn sample_controls(
     controls.tilt = tilt.clamp(-1.0, 1.0);
     // Latch presses until a fixed step consumes them.
     controls.jump_pressed |= jump;
+    controls.jump_held = jump_held;
     controls.turn_pressed |= turn;
     controls.restart |= restart;
 }
@@ -114,5 +117,35 @@ fn collect_menu_actions(
         if !selecting && pad.just_pressed(GamepadButton::Start) {
             menu.0.push(MenuAction::Back);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn releasing_jump_stops_held_thrust_without_losing_the_latched_press() {
+        let mut app = App::new();
+        app.init_resource::<Controls>()
+            .init_resource::<ButtonInput<KeyCode>>()
+            .add_systems(Update, sample_controls);
+        app.world_mut()
+            .resource_mut::<ButtonInput<KeyCode>>()
+            .press(KeyCode::Space);
+        app.update();
+        assert!(app.world().resource::<Controls>().jump_held);
+        assert!(app.world().resource::<Controls>().jump_pressed);
+        {
+            let mut keys = app.world_mut().resource_mut::<ButtonInput<KeyCode>>();
+            keys.clear_just_pressed(KeyCode::Space);
+            keys.release(KeyCode::Space);
+        }
+        app.update();
+        assert!(!app.world().resource::<Controls>().jump_held);
+        assert!(app.world().resource::<Controls>().jump_pressed);
+        app.world_mut().resource_mut::<Controls>().jump_pressed = false;
+        app.update();
+        assert!(!app.world().resource::<Controls>().jump_pressed);
     }
 }

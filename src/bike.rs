@@ -12,6 +12,7 @@ use std::f32::consts::TAU;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
+use crate::effects::{JET_ACCEL, JET_MAX_RISE, MUD_SPEED_FACTOR, RideEffects};
 use crate::physics::{Pose, PreviousPose, Teleported, TrackedBody, bike_groups};
 use crate::run::Run;
 
@@ -29,6 +30,8 @@ pub struct Controls {
     /// positive to the right (clockwise), whichever way the bike faces.
     pub tilt: f32,
     pub jump_pressed: bool,
+    /// Held intent for temporary jet thrust, sampled every frame.
+    pub jump_held: bool,
     pub turn_pressed: bool,
     pub restart: bool,
 }
@@ -111,7 +114,7 @@ impl Default for BikeTuning {
 
 /// The bike's body, which owns the two wheel entities.
 #[derive(Component, Debug)]
-#[require(BikeState)]
+#[require(BikeState, RideEffects)]
 pub struct Bike {
     pub left_wheel: Entity,
     pub right_wheel: Entity,
@@ -270,6 +273,7 @@ fn body_bundle(pose: Pose, tuning: &BikeTuning) -> impl Bundle {
         Friction::coefficient(0.6),
         Restitution::coefficient(0.0),
         Velocity::zero(),
+        GravityScale::default(),
         Damping {
             linear_damping: 0.05,
             angular_damping: 0.3,
@@ -297,6 +301,7 @@ fn wheel_bundle(body: Entity, body_pose: Pose, wheel: Wheel, tuning: &BikeTuning
         },
         Restitution::coefficient(0.0),
         Velocity::zero(),
+        GravityScale::default(),
         Sleeping::disabled(),
         Ccd::enabled(),
         ImpulseJoint::new(
@@ -378,13 +383,24 @@ pub fn place_bike(
 }
 
 /// Applies gas, brake, tilt, jump, and turn-around for one fixed step.
+#[allow(clippy::type_complexity)]
 pub fn drive_bike(
     time: Res<Time>,
     tuning: Res<BikeTuning>,
     run: Res<Run>,
     mut controls: ResMut<Controls>,
-    mut bikes: Query<(&Bike, &mut BikeState, &Pose, &mut Velocity), Without<Wheel>>,
-    mut wheels: Query<(&mut Velocity, &Pose), With<Wheel>>,
+    mut bikes: Query<
+        (
+            &Bike,
+            &mut BikeState,
+            &Pose,
+            &mut Velocity,
+            &mut GravityScale,
+            &mut RideEffects,
+        ),
+        Without<Wheel>,
+    >,
+    mut wheels: Query<(&mut Velocity, &Pose, &mut GravityScale), With<Wheel>>,
 ) {
     let dt = time.delta_secs();
     let jump_pressed = std::mem::take(&mut controls.jump_pressed);
@@ -402,7 +418,48 @@ pub fn drive_bike(
         (0.0, 0.0, 0.0)
     };
 
-    for (bike, mut state, pose, mut body_velocity) in &mut bikes {
+    for (bike, mut state, pose, mut body_velocity, mut gravity, mut effects) in &mut bikes {
+        let escaping = in_control && jump_pressed && effects.stuck.is_some();
+        if escaping && let Some(cactus) = effects.stuck.take() {
+            effects.immune_cacti.push(cactus);
+        }
+        let held = in_control && effects.stuck.is_some();
+        gravity.0 = if held { 0.0 } else { 1.0 };
+        for wheel in [bike.left_wheel, bike.right_wheel] {
+            if let Ok((mut velocity, _, mut gravity)) = wheels.get_mut(wheel) {
+                gravity.0 = if held { 0.0 } else { 1.0 };
+                if held {
+                    *velocity = Velocity::zero();
+                }
+            }
+        }
+        effects.jet_active = false;
+        if held {
+            *body_velocity = Velocity::zero();
+            effects.launch = None;
+            state.jump_buffer = 0.0;
+            continue;
+        }
+        let launch = effects.launch.take().filter(|_| in_control);
+        if let Some(velocity) = launch {
+            body_velocity.linear = velocity;
+            state.left_contact = false;
+            state.right_contact = false;
+            state.coyote = 0.0;
+            for wheel in [bike.left_wheel, bike.right_wheel] {
+                if let Ok((mut v, _, _)) = wheels.get_mut(wheel) {
+                    v.linear = velocity;
+                }
+            }
+        }
+        let jet_time = if in_control && controls.jump_held && !escaping {
+            effects.jet_left.min(dt)
+        } else {
+            0.0
+        };
+        effects.jet_left = (effects.jet_left - jet_time).max(0.0);
+        effects.jet_active = jet_time > 0.0;
+
         let grounded = state.grounded();
         state.coyote = if grounded {
             tuning.coyote_time
@@ -430,7 +487,12 @@ pub fn drive_bike(
             }
         }
 
-        let jump = state.jump_buffer > 0.0 && state.coyote > 0.0;
+        let jump = escaping
+            || (state.jump_buffer > 0.0
+                && state.coyote > 0.0
+                && effects.jet_left == 0.0
+                && jet_time == 0.0
+                && launch.is_none());
         let jump_velocity = jump.then(|| body_velocity.linear.y.max(0.0) + tuning.jump_speed);
         if jump {
             state.jump_buffer = 0.0;
@@ -446,10 +508,23 @@ pub fn drive_bike(
             let slow = tuning.brake_accel * brake * dt;
             push = -along.signum() * slow.min(along.abs());
         } else if throttle > 0.0 && state.rear_contact() {
-            let wanted = tuning.max_speed * throttle;
-            push = (wanted - along).clamp(0.0, tuning.drive_accel * dt);
+            let factor = if effects.muddy { MUD_SPEED_FACTOR } else { 1.0 };
+            let wanted = tuning.max_speed * throttle * factor;
+            push = (wanted - along).clamp(0.0, tuning.drive_accel * factor * dt);
         }
-        let delta = push * forward;
+        if effects.muddy && grounded {
+            let limit = tuning.max_speed * MUD_SPEED_FACTOR;
+            push -= along.signum() * (along.abs() - limit).max(0.0).min(tuning.brake_accel * dt);
+        }
+        let jet_push = (JET_MAX_RISE - body_velocity.linear.y)
+            .max(0.0)
+            .min(JET_ACCEL * jet_time);
+        let escape_push = if escaping {
+            Vec2::X * (state.facing * 260.0 - body_velocity.linear.x)
+        } else {
+            Vec2::ZERO
+        };
+        let delta = push * forward + Vec2::Y * jet_push + escape_push;
 
         // Tilting turns the whole bike as one piece: the wheels get the speed that
         // the turn gives their hinge points, so the joints do not undo it.
@@ -473,7 +548,9 @@ pub fn drive_bike(
         let wheel_positions = [bike.left_wheel, bike.right_wheel].map(|wheel| {
             wheels
                 .get(wheel)
-                .map_or(pose.translation, |(_, wheel_pose)| wheel_pose.translation)
+                .map_or(pose.translation, |(_, wheel_pose, _)| {
+                    wheel_pose.translation
+                })
         });
         let pivot = match (grounded, spin_change > 0.0) {
             (false, _) => pose.translation,
@@ -490,7 +567,7 @@ pub fn drive_bike(
             .into_iter()
             .zip(wheel_positions)
         {
-            let Ok((mut velocity, _)) = wheels.get_mut(wheel) else {
+            let Ok((mut velocity, _, _)) = wheels.get_mut(wheel) else {
                 continue;
             };
             velocity.linear += delta + swing(at);
