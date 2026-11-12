@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 3150 1150" width="3150" height="1150" font-family="Virgil, 'Comic Sans MS', 'Segoe Print', cursive">
+<rect x="-40" y="-40" width="3150" height="1150" fill="#ffffff"/>
+<defs>
+<marker id="a2f9e44" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#2f9e44" stroke-width="1.6"/></marker>
+<marker id="a1e1e1e" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1e1e1e" stroke-width="1.6"/></marker>
+<marker id="ae03131" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#e03131" stroke-width="1.6"/></marker>
+<marker id="ae8590c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#e8590c" stroke-width="1.6"/></marker>
+<marker id="a1971c2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1971c2" stroke-width="1.6"/></marker>
+<marker id="a868e96" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#868e96" stroke-width="1.6"/></marker>
+</defs>
+<text x="0" y="34.199999999999996" font-size="36" fill="#1e1e1e" text-anchor="start">Moto Devil: Level 2 (ein Level, viele Lügen)</text>
+<text x="0" y="67.0" font-size="20" fill="#868e96" text-anchor="start">Sieht aus wie eine Stuntstrecke. Jede rote Zahl ist eine Falle, die beim ersten Mal zuschlägt. Stacheln (2) kann man beim zweiten Mal überspringen.</text>
+<polyline points="0,600 260,600 420,510" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="40,600 40,510" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="40,510 86,526 40,542 40,510" stroke="#2f9e44" stroke-width="2" fill="#2f9e44" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="44.0" y="497.1" font-size="18" fill="#2f9e44" text-anchor="middle">START</text>
+<ellipse cx="110.0" cy="584.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="174.0" cy="584.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="110.0,584.0 132.0,562.0 162.0,562.0 174.0,584.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="120.0,558.0 144.0,558.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="162.0,562.0 166.0,546.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="128.0,576.0 136.0,554.0 144.0,530.0 164.0,546.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="150.0" cy="518.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="200,530 250,530" stroke="#2f9e44" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a2f9e44)"/>
+<polyline points="420,510 420,770 650,770 650,560" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="430,770 443.0,740 456,770 469.0,740 482,770 495.0,740 508,770 521.0,740 534,770" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="535,770 548.0,740 561,770 574.0,740 587,770 600.0,740 613,770 626.0,740 639,770" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="650" y="560" width="110" height="24" stroke="#e03131" stroke-width="2" fill="#ffc9c9" fill-opacity="0.45" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="650" y="630" width="110" height="24" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="675,592 675,624" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ae03131)"/>
+<polyline points="735,592 735,624" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ae03131)"/>
+<polyline points="760,560 1000,560" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="417.84,515.54 429.53999999999996,491.46 445.90999999999997,470.28999999999996 466.28,452.91999999999996 489.78,440.09999999999997 515.4,432.34999999999997 542.06,430.02 568.64,433.19999999999993 594.0,441.74999999999994 617.0799999999999,455.31999999999994 636.88,473.31999999999994 652.5799999999999,494.99999999999994" stroke="#868e96" stroke-width="1" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a868e96)"/>
+<ellipse cx="705.0" cy="480.0" rx="17.0" ry="17.0" stroke="#e03131" stroke-width="2" fill="#fff5f5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="705.0" y="486.0" font-size="20" fill="#e03131" text-anchor="middle">1</text>
+<text x="705.0" y="687.1" font-size="18" fill="#e03131" text-anchor="middle">Landeplatte</text>
+<text x="705.0" y="709.6" font-size="18" fill="#e03131" text-anchor="middle">fällt weg</text>
+<ellipse cx="1000.0" cy="440.0" rx="120.0" ry="120.0" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1032.0" cy="336.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="968.0" cy="336.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1032.0,336.0 1010.0,358.0 980.0,358.0 968.0,336.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1022.0,362.0 998.0,362.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="980.0,358.0 976.0,374.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1014.0,344.0 1006.0,366.0 998.0,390.0 978.0,374.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="992.0" cy="402.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1035.0,500.62 1046.67,492.17 1056.37,481.5 1063.67,469.08 1068.28,455.42 1069.99,441.11 1068.74,426.75 1064.56,412.95 1057.66,400.3 1048.31,389.34000000000003 1036.91,380.52 1023.94,374.22 1009.96,370.71000000000004 995.56,370.14 981.35,372.53 967.92,377.78 955.86,385.67 945.67,395.86 937.78,407.92 932.53,421.35 930.14,435.56 930.71,449.96000000000004 934.22,463.94" stroke="#2f9e44" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a2f9e44)"/>
+<text x="1000.0" y="583.1" font-size="18" fill="#868e96" text-anchor="middle">Looping: braucht Tempo + Gas</text>
+<polyline points="1000,560 1500,560" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="1150" y="400" width="220" height="160" stroke="#1971c2" stroke-width="1" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1260.0" y="385.2" font-size="16" fill="#1971c2" text-anchor="middle">Auslösezone</text>
+<polyline points="1250,560 1262.0,532 1274,560 1286.0,532 1298,560 1310.0,532 1322,560 1334.0,532 1346,560" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1265,590 1265,530" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ae03131)"/>
+<polyline points="1325,590 1325,530" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ae03131)"/>
+<ellipse cx="1300.0" cy="310.0" rx="17.0" ry="17.0" stroke="#e03131" stroke-width="2" fill="#fff5f5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1300.0" y="316.0" font-size="20" fill="#e03131" text-anchor="middle">2</text>
+<text x="1300.0" y="615.1" font-size="18" fill="#e03131" text-anchor="middle">Stacheln schiessen raus,</text>
+<text x="1300.0" y="637.6" font-size="18" fill="#e03131" text-anchor="middle">wenn man drüberfährt</text>
+<polyline points="1400,560 1400,480" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1400,480 1446,496 1400,512 1400,480" stroke="#e8590c" stroke-width="2" fill="#e8590c" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1404.0" y="467.1" font-size="18" fill="#e8590c" text-anchor="middle">CHECKPOINT</text>
+<polyline points="1450,150 1850,150" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="1620" y="150" width="56" height="200" stroke="#e03131" stroke-width="2" fill="#ffc9c9" fill-opacity="0.45" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="1620" y="360" width="56" height="200" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1632,360 1632,410" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ae03131)"/>
+<polyline points="1664,360 1664,410" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ae03131)"/>
+<rect x="1500" y="360" width="100" height="200" stroke="#1971c2" stroke-width="1" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1700.0" cy="205.0" rx="17.0" ry="17.0" stroke="#e03131" stroke-width="2" fill="#fff5f5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1700.0" y="211.0" font-size="20" fill="#e03131" text-anchor="middle">3</text>
+<text x="1760" y="267.1" font-size="18" fill="#e03131" text-anchor="start">Säule kracht direkt</text>
+<text x="1760" y="289.6" font-size="18" fill="#e03131" text-anchor="start">vor dir herunter</text>
+<polyline points="1500,560 1800,560 1930,480" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1930,480 1930,770 2240,770" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="1945,770 1960.0,736 1975,770 1990.0,736 2005,770 2020.0,736 2035,770" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2045,770 2060.0,736 2075,770 2090.0,736 2105,770 2120.0,736 2135,770" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2145,770 2160.0,736 2175,770 2190.0,736 2205,770 2220.0,736 2235,770" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2240,770 2240,470 2340,470 2340,600" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2240,470 2252.5,438 2265,470 2277.5,438 2290,470 2302.5,438 2315,470 2327.5,438 2340,470" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2340,600 2940,600" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1917.84,390.47 1934.47,346.77000000000004 1959.59,307.34000000000003 1992.1599999999999,273.81000000000006 2030.84,247.55000000000004 2074.04,229.66000000000003 2119.96,220.87000000000003 2166.7,221.55000000000004 2212.35,231.67000000000002 2255.0,250.81000000000003 2292.91,278.18 2324.49,312.65000000000003 2348.45,352.8" stroke="#868e96" stroke-width="1" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a868e96)"/>
+<text x="2140.0" y="197.1" font-size="18" fill="#868e96" text-anchor="middle">weit genug springen, um über den Stachelturm zu kommen</text>
+<rect x="2420" y="544" width="70" height="56" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2455.0" y="578.9" font-size="22" fill="#e03131" text-anchor="middle">TNT</text>
+<rect x="2360" y="420" width="200" height="180" stroke="#1971c2" stroke-width="1" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2505.0,572.0 2535.0,572.0" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2490.36,600.28 2511.57,617.25" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2455.0,612.0 2455.0,636.0" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2419.64,600.28 2398.43,617.25" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2405.0,572.0 2375.0,572.0" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2419.64,543.72 2398.43,526.75" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2455.0,532.0 2455.0,508.0" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2490.36,543.72 2511.57,526.75" stroke="#e8590c" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="2455.0" cy="370.0" rx="17.0" ry="17.0" stroke="#e03131" stroke-width="2" fill="#fff5f5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2455.0" y="376.0" font-size="20" fill="#e03131" text-anchor="middle">4</text>
+<text x="2455.0" y="637.1" font-size="18" fill="#e03131" text-anchor="middle">TNT explodiert, wenn</text>
+<text x="2455.0" y="659.6" font-size="18" fill="#e03131" text-anchor="middle">man daneben landet</text>
+<polyline points="2880,600 2880,510" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2880,510 2926,526 2880,542 2880,510" stroke="#2f9e44" stroke-width="2" fill="#2f9e44" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2884.0" y="497.1" font-size="18" fill="#2f9e44" text-anchor="middle">ZIEL?</text>
+<polyline points="2620,600 2620,510" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="2620,510 2666,526 2620,542 2620,510" stroke="#2f9e44" stroke-width="2" fill="#2f9e44" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2624.0" y="497.1" font-size="18" fill="#2f9e44" text-anchor="middle">ZIEL</text>
+<polygon points="1543.0,560 1543.0,531.0 1543.83,525.75 1546.25,521.01 1550.01,517.25 1554.75,514.83 1560.0,514.0 1565.25,514.83 1569.99,517.25 1573.75,521.01 1576.17,525.75 1577.0,531.0 1577.0,560 1543.0,560" stroke="#1971c2" stroke-width="3" fill="#dee2e6" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1560,524.58 1560,544.82" stroke="#1971c2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1552.52,531.02 1567.48,531.02" stroke="#1971c2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1560.0" y="503.2" font-size="16" fill="#1971c2" text-anchor="middle">Mia</text>
+<polygon points="2663.0,600 2663.0,571.0 2663.83,565.75 2666.25,561.01 2670.01,557.25 2674.75,554.83 2680.0,554.0 2685.25,554.83 2689.99,557.25 2693.75,561.01 2696.17,565.75 2697.0,571.0 2697.0,600 2663.0,600" stroke="#1e1e1e" stroke-width="2" fill="#dee2e6" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2680,564.58 2680,584.82" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2672.52,571.02 2687.48,571.02" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2680.0" y="543.2" font-size="16" fill="#1e1e1e" text-anchor="middle">Papa</text>
+<polyline points="2703.0,562 2711.0,572 2727.0,548" stroke="#2f9e44" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="2840.0" cy="584.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="2776.0" cy="584.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2840.0,584.0 2818.0,562.0 2788.0,562.0 2776.0,584.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2830.0,558.0 2806.0,558.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2788.0,562.0 2784.0,546.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2822.0,576.0 2814.0,554.0 2806.0,530.0 2786.0,546.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="2800.0" cy="518.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="2860,450 2650,450" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ae03131)"/>
+<ellipse cx="2755.0" cy="400.0" rx="17.0" ry="17.0" stroke="#e03131" stroke-width="2" fill="#fff5f5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="2755.0" y="406.0" font-size="20" fill="#e03131" text-anchor="middle">5</text>
+<text x="2755.0" y="637.1" font-size="18" fill="#e03131" text-anchor="middle">das Ziel springt hinter dich:</text>
+<text x="2755.0" y="659.6" font-size="18" fill="#e03131" text-anchor="middle">mit E umdrehen</text>
+<text x="0" y="882.8" font-size="24" fill="#1e1e1e" text-anchor="start">Legende</text>
+<rect x="0" y="905" width="60" height="34" stroke="#1971c2" stroke-width="1" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="80" y="927.1" font-size="18" fill="#1e1e1e" text-anchor="start">unsichtbare Auslösezone: die Falle schlägt zu, wenn das Bike hineinfährt</text>
+<rect x="0" y="955" width="60" height="34" stroke="#e03131" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="80" y="977.1" font-size="18" fill="#1e1e1e" text-anchor="start">rot gestrichelt = wo die Falle landet</text>
+<rect x="0" y="1005" width="60" height="34" stroke="#e03131" stroke-width="2" fill="#ffc9c9" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="80" y="1027.1" font-size="18" fill="#1e1e1e" text-anchor="start">rot = Berührung mit Fahrer oder Bike ist ein Crash</text>
+<text x="900" y="927.1" font-size="18" fill="#1971c2" text-anchor="start">Nach einem Crash: zurück zum letzten Checkpoint, alle Fallen wieder scharf.</text>
+<text x="900" y="977.1" font-size="18" fill="#1971c2" text-anchor="start">Jede Falle schlägt jedes Mal gleich zu: beim zweiten Versuch fair.</text>
+<text x="900" y="1027.1" font-size="18" fill="#868e96" text-anchor="start">Vorlage: Stiftzeichnungen in docs/pitches/attachments/</text>
+</svg>

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 1566 790" width="1566" height="790" font-family="Virgil, 'Comic Sans MS', 'Segoe Print', cursive">
+<rect x="-40" y="-40" width="1565.7" height="790" fill="#ffffff"/>
+<defs>
+<marker id="a7048e8" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#7048e8" stroke-width="1.6"/></marker>
+<marker id="a2f9e44" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#2f9e44" stroke-width="1.6"/></marker>
+<marker id="a1e1e1e" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1e1e1e" stroke-width="1.6"/></marker>
+<marker id="a1971c2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1971c2" stroke-width="1.6"/></marker>
+<marker id="a868e96" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#868e96" stroke-width="1.6"/></marker>
+</defs>
+<text x="0" y="34.199999999999996" font-size="36" fill="#1e1e1e" text-anchor="start">Moto Devil: Spielerauswahl</text>
+<text x="0" y="67.0" font-size="20" fill="#868e96" text-anchor="start">Der erste Bildschirm. Ohne Namen kein Fortschritt, also kommt er vor jedem Level.</text>
+<rect x="0" y="110" width="1000" height="600" rx="10" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="500.0" y="185.6" font-size="48" fill="#1e1e1e" text-anchor="middle">MOTO DEVIL</text>
+<text x="500.0" y="241.6" font-size="28" fill="#868e96" text-anchor="middle">Wer fährt?</text>
+<rect x="250" y="280" width="500" height="60" rx="10" stroke="#1971c2" stroke-width="3" fill="#d0ebff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="232.0" y="316.8" font-size="24" fill="#1971c2" text-anchor="end">▶</text>
+<polygon points="278.0,332 278.0,310.0 278.59,306.29 280.29,302.95 282.95,300.29 286.29,298.59000000000003 290.0,298.0 293.71,298.59000000000003 297.05,300.29 299.71,302.95 301.41,306.29 302.0,310.0 302.0,332 278.0,332" stroke="#1971c2" stroke-width="3" fill="#dee2e6" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="290,305.82 290,320.78" stroke="#1971c2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="284.72,310.58 295.28000000000003,310.58" stroke="#1971c2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="340" y="318.7" font-size="26" fill="#1971c2" text-anchor="start">Mia</text>
+<text x="730.0" y="317.1" font-size="18" fill="#868e96" text-anchor="end">1 von 2 Leveln geschafft</text>
+<rect x="250" y="356" width="500" height="60" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="278.0,408 278.0,386.0 278.59,382.29 280.29,378.95 282.95,376.29 286.29,374.59000000000003 290.0,374.0 293.71,374.59000000000003 297.05,376.29 299.71,378.95 301.41,382.29 302.0,386.0 302.0,408 278.0,408" stroke="#1e1e1e" stroke-width="2" fill="#dee2e6" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="290,381.82 290,396.78" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="284.72,386.58 295.28000000000003,386.58" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="340" y="394.7" font-size="26" fill="#1e1e1e" text-anchor="start">Ben</text>
+<text x="730.0" y="393.1" font-size="18" fill="#868e96" text-anchor="end">noch kein Level geschafft</text>
+<rect x="250" y="432" width="500" height="60" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polygon points="278.0,484 278.0,462.0 278.59,458.29 280.29,454.95 282.95,452.29 286.29,450.59000000000003 290.0,450.0 293.71,450.59000000000003 297.05,452.29 299.71,454.95 301.41,458.29 302.0,462.0 302.0,484 278.0,484" stroke="#1e1e1e" stroke-width="2" fill="#dee2e6" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="290,457.82 290,472.78" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="284.72,462.58 295.28000000000003,462.58" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="308.0,458 316.0,468 332.0,444" stroke="#2f9e44" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="340" y="470.7" font-size="26" fill="#1e1e1e" text-anchor="start">Papa</text>
+<text x="730.0" y="469.1" font-size="18" fill="#868e96" text-anchor="end">alle Level geschafft</text>
+<rect x="250" y="508" width="500" height="60" rx="10" stroke="#7048e8" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="272" y="544.9" font-size="22" fill="#7048e8" text-anchor="start">+ Neuer Spieler:</text>
+<rect x="470" y="520" width="250" height="38" stroke="#7048e8" stroke-width="2" fill="#ffffff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="482" y="546.9" font-size="22" fill="#1e1e1e" text-anchor="start">Le|</text>
+<text x="500.0" y="657.1" font-size="18" fill="#868e96" text-anchor="middle">↑/↓ wählen  ·  Enter fahren  ·  Buchstaben tippen = neuer Name  ·  Esc beenden</text>
+<text x="1060" y="157.1" font-size="18" fill="#1e1e1e" text-anchor="start">Namen und Fortschritt bleiben auf diesem</text>
+<text x="1060" y="179.6" font-size="18" fill="#1e1e1e" text-anchor="start">Computer gespeichert.</text>
+<text x="1060" y="257.1" font-size="18" fill="#1e1e1e" text-anchor="start">Name: 1 bis 12 Zeichen, Buchstaben,</text>
+<text x="1060" y="279.6" font-size="18" fill="#1e1e1e" text-anchor="start">Ziffern und Leerzeichen; keine doppelten.</text>
+<text x="1060" y="357.1" font-size="18" fill="#1e1e1e" text-anchor="start">Kein Passwort: jeder darf jeden Namen</text>
+<text x="1060" y="379.6" font-size="18" fill="#1e1e1e" text-anchor="start">wählen. Es ist ein Familienspiel.</text>
+<text x="1060" y="457.1" font-size="18" fill="#1e1e1e" text-anchor="start">Der kleine Grabstein zeigt den Fortschritt;</text>
+<text x="1060" y="479.6" font-size="18" fill="#1e1e1e" text-anchor="start">mit Haken = alle Level geschafft.</text>
+<text x="1060" y="557.1" font-size="18" fill="#1971c2" text-anchor="start">Enter auf einem Namen startet beim ersten</text>
+<text x="1060" y="579.6" font-size="18" fill="#1971c2" text-anchor="start">noch nicht geschafften Level.</text>
+</svg>

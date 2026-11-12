@@ -7,8 +7,7 @@ it. [AGENTS.md](../../AGENTS.md) is the agent working brief;
 
 ## Current structure and runtime
 
-The project is one Rust binary crate implementing the
-[starter platformer pitch](../pitches/starter-platformer/pitch--starter-platformer.md):
+The project is one Rust binary crate implementing the starter platformer:
 one level from a text map, a player who runs and jumps, coins, a goal flag, a
 following camera, and a HUD. [Cargo.toml](../../Cargo.toml) uses Rust edition 2024
 and Bevy 0.20 with default features disabled and the `2d`, `audio`, and `ui`
