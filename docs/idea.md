@@ -1,32 +1,37 @@
-# Game idea — Starter Platformer
+# Game idea — Moto Devil
 
-This template ships a deliberately small 2D platformer so a new project starts from
-something that builds, runs, and has tests. Replace this document with your own
-game's direction when you start a project from the template.
+A stunt-bike game whose levels lie to you. It mixes two genres: a side-on
+motorbike on a track with ramps, loops, and flips, and a troll platformer where the
+level looks harmless and then betrays you. You die, laugh, and try again knowing
+one more trick. The ideas come from pen sketches in
+[docs/pitches/attachments/](pitches/attachments/).
 
-## What it is
+## What it is today
 
-Run and jump through one short side-scrolling level, pick up coins on the way, and
-touch the flag at the end. Falling out of the level puts you back at the start;
-Restart begins a fresh run. A small panel shows the collected coins and the time.
+Pick or type your name, then ride. Arrow keys or WASD give gas, brake, and tilt; the
+space bar jumps and `E` turns the bike around. Level 1 is very simple and has a
+single trap; level 2 has a dropping slab, a loop with spikes behind it, a falling
+pillar, a spiky tower with TNT behind it, and a finish that jumps behind you. Every
+player who rode a level leaves a gravestone where they crashed farthest, or at the
+finish once they made it. Progress is saved on this computer. The
+[Moto Devil pitch](pitches/moto-devil/pitch--moto-devil.md) describes the details.
 
-## Why this starter
+## Principles
 
-- **One of everything.** The game has a body that moves, a level, something to
-  collect, a goal, a camera, and a HUD: enough to show where each kind of code goes
-  without committing a new project to any of them.
-- **Responsive feel without a physics engine.** Coyote time, jump buffering, and a
-  variable jump height make the controls forgiving in a few dozen lines.
-- **Headless by default.** The rules run without a window, so the tests exercise
-  the real systems.
+- **Easy keys, hard levels.** The controls should be understood in a minute; the
+  difficulty comes from the traps, and assists keep the bike from flipping over by
+  accident.
+- **Fair on the second try.** Traps fire the same way every time and respawns are
+  instant, so dying is part of learning a level.
+- **Something to beat.** Gravestones show how far everyone at home got.
 
-## Directions a project might take
+## Directions the game might take
 
 These are examples, not commitments:
 
-- Levels loaded as assets instead of the built-in text map.
-- Hazards, moving platforms, or enemies.
-- Sprites, animation, sound, and particles.
-- Menus, settings, and saved progress.
+- More levels and new trap kinds.
+- Sprites, animation, sound, and particles instead of coloured shapes.
+- Best times, stars, or a score for flips.
+- Renaming and removing players in the game, or a level select.
 
 Shape each larger step as a [pitch](pitches/README.md) before building it.

@@ -1,12 +1,20 @@
-//! A small 2D platformer starter: run, jump, collect coins, and reach the flag.
+//! Moto Devil: a stunt-bike game whose levels lie to you.
 
+mod bike;
 mod camera;
+mod course;
+mod flow;
 mod hud;
 mod input;
 mod level;
-mod player;
+mod levels;
+mod menu;
+mod physics;
+mod progress;
 mod run;
+mod save;
 mod simulation;
+mod traps;
 mod visuals;
 
 #[cfg(test)]
@@ -18,7 +26,7 @@ fn main() -> AppExit {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: "Bevy Template".into(),
+                title: "Moto Devil".into(),
                 resolution: (960, 540).into(),
                 ..default()
             }),
@@ -26,10 +34,12 @@ fn main() -> AppExit {
         }))
         .add_plugins((
             simulation::SimulationPlugin,
+            save::SavePlugin,
             input::InputPlugin,
             visuals::VisualsPlugin,
             camera::CameraPlugin,
             hud::HudPlugin,
+            menu::MenuPlugin,
         ))
         .run()
 }

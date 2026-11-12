@@ -1,55 +1,58 @@
-# Bevy template
+# Moto Devil
 
-A starting point for 2D games built with [Bevy](https://bevy.org) 0.20. It ships a
-small, tested platformer, a documentation structure for shaping and recording work,
-agent instructions with a library of Bevy skills, and [mise](https://mise.jdx.dev)
-tasks to build, test, and run the game.
+A stunt-bike game whose levels lie to you, built with [Bevy](https://bevy.org) 0.20
+and [Rapier](https://rapier.rs). The project grew from a Bevy template and keeps its
+documentation structure for shaping and recording work, agent instructions with a
+library of Bevy skills, and [mise](https://mise.jdx.dev) tasks to build, test, and
+run the game.
 
 ## What's inside
 
 | Path | Purpose |
 | --- | --- |
-| `src/` | The starter platformer: headless simulation plus presentation plugins |
+| `src/` | The game: headless simulation (with Rapier) plus presentation plugins |
+| `assets/fonts/` | The compiled-in UI font (DejaVu Sans Bold) and its license |
 | `docs/idea.md` | Game direction and longer-term possibilities |
-| `docs/pitches/` | Shaped feature proposals (Problem, Solution, Security, Rabbit Holes, No-Gos) |
+| `docs/pitches/` | Shaped feature proposals in German (Problem, Lösung, Sicherheit, Rabbit Holes, No-Gos) |
 | `docs/architecture/` | Current structure and conventions, and [decision records](docs/architecture/decisions/README.md) |
 | `.agents/skills/` | Bevy 0.20 skills for coding agents; versions in `skills-lock.json` |
 | `shell.nix` | Native build and runtime libraries for NixOS (`nix-shell`) |
 | `.mise/` | Pinned Rust toolchain and `build`, `test`, `run`, `check`, `fmt`, `agents:init-claude` tasks |
 | `AGENTS.md`, `CONTRIBUTING.md` | Working brief for agents; workflow and validation for everyone |
 
-## Starting a new game from this template
+## How to play
 
-1. Rename the package in `Cargo.toml` and the window title in `src/main.rs`.
-2. Replace [docs/idea.md](docs/idea.md) with your game's direction.
-3. Shape the first feature as a [pitch](docs/pitches/README.md). Keep the starter
-   pitch as an example or delete it with the code it describes.
-4. Review the [ADRs](docs/architecture/decisions/README.md): keep those that still
-   hold, and supersede those you change.
-5. Rewrite the project description in this README, `AGENTS.md`, and the manual
-   checks in `CONTRIBUTING.md` as the game takes shape.
-
-## How to play the starter
-
-Run right, collect the coins, and touch the flag. Falling out of the level returns
-you to the start; Restart begins a fresh run with all coins back and the clock reset.
+Type your name on the first screen (or pick it with ↑/↓) and press Enter. You start
+at the first level you have not finished yet. Ride to the flag; when the level lies
+to you, you crash, respawn at the last checkpoint at once, and know one more trick.
+Your gravestone marks the farthest place you crashed, next to everyone else's.
 
 | Action | Keyboard | Controller |
 | --- | --- | --- |
-| Run left / right | A / D or Left / Right | Left stick or D-pad |
-| Jump (hold for higher) | Space, W, or Up | South (A / Cross) |
-| Restart | R or Backspace | Select |
-| Quit | Escape | – |
+| Gas (in the direction the bike faces) | W or Up | Right trigger |
+| Brake | S or Down | Left trigger |
+| Tilt left / right (spin in the air for flips) | A / D or Left / Right | Left stick or D-pad |
+| Jump | Space | South (A / Cross) |
+| Turn around | E | West (X / Square) |
+| Restart the level | R | Select |
+| Next level after the finish | Enter | South |
+| Back to the player selection | Escape | Start |
 
-Keys are physical positions, so WASD stays in place on any keyboard layout. A jump
-pressed just before landing, or just after running off a ledge, still counts.
+Riding keys are physical positions, so WASD and E stay in place on any keyboard
+layout. In the air the bike slowly rights itself when no tilt key is held, and on
+the ground it never leans far enough to flip over. Escape on the player selection
+quits.
+
+Progress is saved in `moto-devil/progress.txt` in your data directory
+(`~/.local/share` on Linux). Edit or delete that file to rename or remove players.
 
 ## Requirements
 
 - [mise](https://mise.jdx.dev), recommended: `mise install` provides Rust 1.97.1
   with rustfmt and Clippy, as pinned in [.mise/config.toml](.mise/config.toml).
   Without mise, install Rust 1.97.1 or newer (edition 2024) with rustup.
-- Bevy 0.20.1, downloaded automatically by Cargo. `Cargo.lock` pins dependencies.
+- Bevy 0.20.1 and bevy_rapier2d 0.37, downloaded automatically by Cargo.
+  `Cargo.lock` pins dependencies.
 - Clang and LLD on x86_64 Linux, used by [.cargo/config.toml](.cargo/config.toml)
   for faster linking. Remove that file to use the default linker instead.
 - A working Vulkan (Linux, Windows) or Metal (macOS) graphics driver.

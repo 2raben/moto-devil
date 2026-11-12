@@ -1,126 +1,204 @@
-//! The level: a tile map parsed into solid rectangles, a start, a goal, and coins.
+//! Level data: a ground profile, extra solids, loops, spikes, traps, checkpoints,
+//! the start, and the finish.
 //!
-//! The map is plain text so a level can be edited without tooling. Parsing is pure
-//! and has no Bevy systems, so it is tested directly.
+//! A level is plain data in world units with y pointing up. Nothing here spawns
+//! entities, so the geometry helpers are tested directly. The concrete levels live
+//! in [`crate::levels`].
 
 use bevy::prelude::*;
 
-/// The side of one map tile, in world units.
-pub const TILE: f32 = 32.0;
+/// Width of one spike.
+pub const SPIKE_WIDTH: f32 = 24.0;
+/// Height of a raised spike.
+pub const SPIKE_HEIGHT: f32 = 28.0;
 
-/// The starter level. Each row is one tile high; the first row is the top.
-///
-/// - `#` solid ground or wall
-/// - `P` player start (exactly one)
-/// - `G` goal flag (exactly one)
-/// - `o` coin
-/// - `.` or space: empty
-pub const STARTER_MAP: &[&str] = &[
-    "............................................................",
-    "............................................................",
-    "............................................................",
-    "............................................................",
-    "............................oooo...............oo...........",
-    "..........ooo...............####..##........................",
-    "....................##............##......................G.",
-    "..P...............####............##...o.o.o.............###",
-    "##########...#########...#####################....##########",
-    "##########...#########...#####################....##########",
-];
-
-/// A parsed level, in world units with the origin at the map's bottom-left.
-#[derive(Resource, Clone, Debug)]
-pub struct Level {
-    /// Solid tiles merged into horizontal runs.
-    pub solids: Vec<Rect>,
-    /// Where the player's feet start: the centre-bottom of the `P` tile.
-    pub start: Vec2,
-    /// The goal tile; touching it finishes the run.
-    pub goal: Rect,
-    /// Centres of the coins.
-    pub coins: Vec<Vec2>,
-    /// The area covered by the map.
-    pub bounds: Rect,
+/// A row of spikes standing on `base`, starting at `left`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Spikes {
+    pub left: f32,
+    pub base: f32,
+    pub count: u32,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum LevelError {
-    Empty,
-    UnknownTile {
-        row: usize,
-        column: usize,
-        tile: char,
-    },
-    MissingStart,
-    MissingGoal,
-    DuplicateStart,
-    DuplicateGoal,
+impl Spikes {
+    pub fn width(&self) -> f32 {
+        self.count as f32 * SPIKE_WIDTH
+    }
+
+    /// The deadly area when the spikes are raised by `raised` (0 = hidden, 1 =
+    /// fully up). It is a little lower than the tips so that grazing the very
+    /// point of a spike does not count.
+    pub fn hazard(&self, raised: f32) -> Rect {
+        Rect::new(
+            self.left + 2.0,
+            self.base,
+            self.left + self.width() - 2.0,
+            self.base + raised * 0.75 * SPIKE_HEIGHT,
+        )
+    }
+}
+
+/// A vertical loop whose inner surface has `radius` and whose bottom touches the
+/// ground at `center.y - radius`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Loop {
+    pub center: Vec2,
+    pub radius: f32,
+}
+
+/// What a trap does once the bike enters its trigger zone.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum TrapKind {
+    /// A solid slab that drops away shortly after the bike lands on it.
+    DropSlab { slab: Rect },
+    /// Hidden spikes that shoot up out of the ground.
+    PopUpSpikes { spikes: Spikes },
+    /// A pillar hanging from the ceiling that crashes down to `floor`, waits, and
+    /// rises again.
+    FallingPillar { pillar: Rect, floor: f32 },
+    /// A TNT crate that explodes after a short fuse.
+    Tnt { crate_box: Rect, blast_radius: f32 },
+    /// The finish flag jumps to `to`, usually behind the bike.
+    JumpingFinish { to: Rect },
+}
+
+/// A trap and the invisible zone that fires it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct TrapDef {
+    pub kind: TrapKind,
+    pub trigger: Rect,
+}
+
+/// Touching `zone` makes `respawn` the new respawn point.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Checkpoint {
+    pub zone: Rect,
+    pub respawn: Vec2,
+}
+
+/// One level. `ground` is a profile from left to right: its x values never
+/// decrease, and vertical steps (two points with the same x) make walls and pits.
+#[derive(Resource, Clone, Debug, PartialEq)]
+pub struct Level {
+    /// Stable identifier used in the save file; never reuse or renumber.
+    pub id: &'static str,
+    /// Shown to the player.
+    pub name: &'static str,
+    pub ground: Vec<Vec2>,
+    /// Extra solid blocks, such as a ceiling.
+    pub solids: Vec<Rect>,
+    pub loops: Vec<Loop>,
+    /// Spikes that are always out.
+    pub spikes: Vec<Spikes>,
+    pub traps: Vec<TrapDef>,
+    pub checkpoints: Vec<Checkpoint>,
+    /// The ground point below the middle of the bike at the start.
+    pub start: Vec2,
+    /// Touching this zone finishes the level (unless a trap moves it).
+    pub finish: Rect,
+    /// The area the camera may show.
+    pub bounds: Rect,
+    /// A bike whose body sinks below this height has fallen out.
+    pub fall_y: f32,
 }
 
 impl Level {
-    pub fn parse(rows: &[&str]) -> Result<Self, LevelError> {
-        let height = rows.len();
-        let width = rows
-            .iter()
-            .map(|row| row.chars().count())
-            .max()
-            .unwrap_or(0);
-        if height == 0 || width == 0 {
-            return Err(LevelError::Empty);
-        }
-        let tile_rect = |row: usize, column: usize| {
-            let min = Vec2::new(column as f32, (height - 1 - row) as f32) * TILE;
-            Rect::from_corners(min, min + Vec2::splat(TILE))
-        };
+    /// The height of the ground profile at `x`, or `None` outside the profile.
+    /// At a vertical step the higher side counts.
+    pub fn ground_height(&self, x: f32) -> Option<f32> {
+        self.ground
+            .windows(2)
+            .filter_map(|pair| {
+                let (a, b) = (pair[0], pair[1]);
+                if x < a.x || x > b.x {
+                    return None;
+                }
+                if b.x - a.x <= f32::EPSILON {
+                    return Some(a.y.max(b.y));
+                }
+                Some(a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x))
+            })
+            .reduce(f32::max)
+    }
 
-        let mut solids = Vec::new();
-        let mut start = None;
-        let mut goal = None;
-        let mut coins = Vec::new();
-        for (row, line) in rows.iter().enumerate() {
-            let mut run: Option<Rect> = None;
-            for (column, tile) in line.chars().enumerate() {
-                let rect = tile_rect(row, column);
-                if tile == '#' {
-                    run = Some(run.map_or(rect, |run| run.union(rect)));
-                    continue;
-                }
-                solids.extend(run.take());
-                match tile {
-                    '.' | ' ' => {}
-                    'o' => coins.push(rect.center()),
-                    'P' if start.is_some() => return Err(LevelError::DuplicateStart),
-                    'P' => start = Some(Vec2::new(rect.center().x, rect.min.y)),
-                    'G' if goal.is_some() => return Err(LevelError::DuplicateGoal),
-                    'G' => goal = Some(rect),
-                    tile => return Err(LevelError::UnknownTile { row, column, tile }),
-                }
+    /// The left and right end of the level's ground.
+    pub fn x_range(&self) -> (f32, f32) {
+        let first = self.ground.first().map_or(0.0, |p| p.x);
+        let last = self.ground.last().map_or(0.0, |p| p.x);
+        (first, last)
+    }
+
+    /// Checks the rules every level must follow; the built-in levels are tested
+    /// with it.
+    pub fn validate(&self) -> Result<(), String> {
+        if self.id.is_empty() || self.name.is_empty() {
+            return Err("a level needs an id and a name".into());
+        }
+        if self.ground.len() < 2 {
+            return Err(format!("{}: the ground needs at least two points", self.id));
+        }
+        if self.ground.windows(2).any(|pair| pair[1].x < pair[0].x) {
+            return Err(format!("{}: ground x values must not decrease", self.id));
+        }
+        let inside = |point: Vec2| self.bounds.contains(point);
+        if !inside(self.start) {
+            return Err(format!("{}: the start is outside the bounds", self.id));
+        }
+        match self.ground_height(self.start.x) {
+            Some(height) if (height - self.start.y).abs() < 1.0 => {}
+            _ => return Err(format!("{}: the start is not on the ground", self.id)),
+        }
+        if !inside(self.finish.center()) {
+            return Err(format!("{}: the finish is outside the bounds", self.id));
+        }
+        if self.fall_y >= self.start.y {
+            return Err(format!("{}: the fall line is above the start", self.id));
+        }
+        for trap in &self.traps {
+            if !inside(trap.trigger.center()) {
+                return Err(format!("{}: a trap trigger is outside the bounds", self.id));
             }
-            solids.extend(run);
         }
-
-        Ok(Self {
-            solids,
-            start: start.ok_or(LevelError::MissingStart)?,
-            goal: goal.ok_or(LevelError::MissingGoal)?,
-            coins,
-            bounds: Rect::new(0.0, 0.0, width as f32 * TILE, height as f32 * TILE),
-        })
-    }
-
-    pub fn starter() -> Self {
-        Self::parse(STARTER_MAP).expect("the starter map is valid")
-    }
-
-    /// Below this height the player has fallen out of the level.
-    pub fn fall_limit(&self) -> f32 {
-        self.bounds.min.y - 4.0 * TILE
+        for checkpoint in &self.checkpoints {
+            if !inside(checkpoint.respawn) {
+                return Err(format!("{}: a checkpoint is outside the bounds", self.id));
+            }
+        }
+        Ok(())
     }
 }
 
-impl Default for Level {
-    fn default() -> Self {
-        Self::starter()
+/// Builds a ground profile from left to right.
+#[derive(Default)]
+pub struct Profile(Vec<Vec2>);
+
+impl Profile {
+    pub fn start(x: f32, y: f32) -> Self {
+        Self(vec![Vec2::new(x, y)])
+    }
+
+    /// A straight line to `(x, y)`.
+    pub fn to(mut self, x: f32, y: f32) -> Self {
+        self.0.push(Vec2::new(x, y));
+        self
+    }
+
+    /// A smooth bump of `height` from the current point to `x`, ending at the
+    /// current height.
+    pub fn hill(mut self, x: f32, height: f32) -> Self {
+        let from = *self.0.last().expect("a profile has a start");
+        const STEPS: usize = 12;
+        for step in 1..=STEPS {
+            let t = step as f32 / STEPS as f32;
+            let lift = 0.5 * (1.0 - (std::f32::consts::TAU * t).cos());
+            self.0
+                .push(Vec2::new(from.x + (x - from.x) * t, from.y + height * lift));
+        }
+        self
+    }
+
+    pub fn build(self) -> Vec<Vec2> {
+        self.0
     }
 }
 
@@ -128,51 +206,58 @@ impl Default for Level {
 mod tests {
     use super::*;
 
-    #[test]
-    fn starter_map_parses() {
-        let level = Level::starter();
-        assert!(!level.solids.is_empty());
-        assert!(!level.coins.is_empty());
-        assert!(level.bounds.contains(level.start));
-        assert!(level.bounds.contains(level.goal.center()));
+    fn flat() -> Level {
+        Level {
+            id: "test",
+            name: "Test",
+            ground: Profile::start(0.0, 0.0)
+                .to(100.0, 0.0)
+                .to(100.0, -50.0)
+                .to(200.0, -50.0)
+                .to(300.0, 50.0)
+                .build(),
+            solids: vec![],
+            loops: vec![],
+            spikes: vec![],
+            traps: vec![],
+            checkpoints: vec![],
+            start: Vec2::new(50.0, 0.0),
+            finish: Rect::new(280.0, 50.0, 290.0, 100.0),
+            bounds: Rect::new(0.0, -100.0, 300.0, 300.0),
+            fall_y: -80.0,
+        }
     }
 
     #[test]
-    fn merges_solid_runs_and_flips_rows() {
-        let level = Level::parse(&["P..G", "##.#"]).unwrap();
+    fn ground_height_follows_the_profile() {
+        let level = flat();
+        assert_eq!(level.ground_height(50.0), Some(0.0));
         assert_eq!(
-            level.solids,
-            vec![
-                Rect::new(0.0, 0.0, 2.0 * TILE, TILE),
-                Rect::new(3.0 * TILE, 0.0, 4.0 * TILE, TILE),
-            ]
+            level.ground_height(100.0),
+            Some(0.0),
+            "the higher side of a step"
         );
-        assert_eq!(level.start, Vec2::new(0.5 * TILE, TILE));
-        assert_eq!(
-            level.goal,
-            Rect::new(3.0 * TILE, TILE, 4.0 * TILE, 2.0 * TILE)
-        );
+        assert_eq!(level.ground_height(150.0), Some(-50.0));
+        assert_eq!(level.ground_height(250.0), Some(0.0));
+        assert_eq!(level.ground_height(400.0), None);
     }
 
     #[test]
-    fn rejects_invalid_maps() {
-        assert_eq!(Level::parse(&[]).unwrap_err(), LevelError::Empty);
-        assert_eq!(
-            Level::parse(&["..G"]).unwrap_err(),
-            LevelError::MissingStart
-        );
-        assert_eq!(Level::parse(&["P.."]).unwrap_err(), LevelError::MissingGoal);
-        assert_eq!(
-            Level::parse(&["PPG"]).unwrap_err(),
-            LevelError::DuplicateStart
-        );
-        assert_eq!(
-            Level::parse(&["P?G"]).unwrap_err(),
-            LevelError::UnknownTile {
-                row: 0,
-                column: 1,
-                tile: '?'
-            }
-        );
+    fn validation_catches_broken_levels() {
+        assert_eq!(flat().validate(), Ok(()));
+        let mut floating = flat();
+        floating.start.y = 20.0;
+        assert!(floating.validate().is_err());
+        let mut backwards = flat();
+        backwards.ground.push(Vec2::new(10.0, 0.0));
+        assert!(backwards.validate().is_err());
+    }
+
+    #[test]
+    fn hills_rise_and_return() {
+        let profile = Profile::start(0.0, 0.0).hill(100.0, 40.0).build();
+        let top = profile.iter().map(|p| p.y).fold(f32::MIN, f32::max);
+        assert!((top - 40.0).abs() < 1e-3);
+        assert!(profile.last().unwrap().y.abs() < 1e-3);
     }
 }
