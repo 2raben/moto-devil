@@ -83,19 +83,26 @@ For rendering, input, or gameplay changes, also run:
 mise run run
 ```
 
-Check the affected behavior manually in the starter level:
+Check the affected behavior manually:
 
-- A/D and the arrow keys run; releasing stops quickly. The player faces its
-  direction of travel, and motion looks smooth.
-- Holding jump clears the wall before the last gap; tapping gives a short hop.
-  There are no midair jumps.
-- The player cannot pass through walls, ceilings, or the floating platform.
-- Coins disappear on touch and the HUD count rises.
-- Falling into a gap returns to the start with coins and time kept.
-- Touching the flag stops the clock and shows the finish cue; only Restart works
-  until then. Restart restores all coins, the start position, and the clock.
-- A controller runs with the stick or D-pad, jumps with South, and restarts with
-  Select. Escape quits.
+- The player selection shows "Wer fährt?"; typing a name (umlauts included) and
+  Enter starts riding; ↑/↓ picks an existing player; Escape quits.
+- W/↑ accelerates smoothly, S/↓ brakes, A/D and ←/→ tilt; holding a tilt in the air
+  flips the bike, and releasing it lets the bike right itself. On the ground the bike
+  does not flip over backwards.
+- Space jumps only from the ground; E turns the bike around and gas then drives the
+  other way.
+- Level 1: the small ramp clears the ditch at speed; the spikes before the finish
+  pop up; the finish shows the result, and Enter goes on to level 2.
+- Level 2: the slab drops, the loop can be ridden at full gas, the spikes after the
+  loop pop up, the checkpoint moves the respawn point, the pillar falls and rises,
+  TNT explodes, and the finish jumps behind the bike.
+- A crash shows "Autsch!", the bike respawns quickly, and the player's gravestone
+  appears where they crashed farthest. Gravestones of other players show with their
+  names; after quitting and restarting the game, they are still there.
+- R restarts the level; Escape returns to the player selection.
+- A controller rides with the triggers and stick, jumps with South, turns with
+  West, restarts with Select, and returns with Start.
 
 Record what was checked; if no graphical environment is available, report that
 limitation.

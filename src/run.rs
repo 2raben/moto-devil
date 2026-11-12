@@ -1,158 +1,226 @@
-//! The rules of one run through the level: coins, the goal, falling out, and
-//! restarting. Like the player movement, these run headless on the fixed timestep.
+//! The rules of one run through a level: crashes and respawns, checkpoints, the
+//! finish, the clock, and the progress they write into [`Profiles`].
 
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
+use crate::bike::{self, Bike, BikeState, BikeTuning, BodyParts, Controls, Wheel};
 use crate::level::Level;
-use crate::player::{
-    Controls, Grounding, Player, PlayerTuning, Position, PreviousPosition, Velocity, body_rect,
-    respawn,
-};
+use crate::physics::{BIKE, Pose, TrackedBody, WORLD};
+use crate::progress::{ActivePlayer, Profiles};
+use crate::traps::{Finish, Hazard};
 
-/// Marks a collectable coin. Its [`Position`] is the coin's centre.
-#[derive(Component, Debug)]
-pub struct Coin;
-
-/// Coins within this distance of the player's box are collected.
-pub const COIN_RADIUS: f32 = 10.0;
+/// How long the flip and checkpoint cues stay on screen.
+pub const CUE_SECONDS: f32 = 1.2;
 
 /// Progress through the current run.
-#[derive(Resource, Clone, Debug, Default)]
+#[derive(Resource, Clone, Debug, Default, PartialEq)]
 pub struct Run {
-    pub coins: usize,
-    pub total_coins: usize,
-    /// Seconds since the run started; stops when the goal is reached.
+    /// Seconds since the run started; stops at the finish.
     pub elapsed: f32,
+    pub deaths: u32,
+    pub flips: u32,
     pub finished: bool,
-    /// Times the player fell out of the level during this run.
-    pub falls: u32,
+    /// Seconds left until the respawn, after a crash.
+    pub crash: Option<f32>,
+    /// Where the bike comes back after a crash.
+    pub respawn: Vec2,
+    /// Counts respawns and restarts; traps re-arm when it changes.
+    pub attempt: u32,
+    /// The last flips landed and the seconds since, for the HUD.
+    pub flip_cue: Option<(u32, f32)>,
+    /// Seconds since the last new checkpoint, for the HUD.
+    pub checkpoint_cue: Option<f32>,
 }
 
-pub fn coin_bundle(center: Vec2) -> impl Bundle {
-    (Name::new("Coin"), Coin, Position(center))
-}
-
-/// Spawns the level's coins and resets the run.
-pub fn start_run(mut commands: Commands, level: Res<Level>, mut run: ResMut<Run>) {
-    for &center in &level.coins {
-        commands.spawn(coin_bundle(center));
+impl Run {
+    pub fn new(start: Vec2) -> Self {
+        Self {
+            respawn: start,
+            ..default()
+        }
     }
-    *run = Run {
-        total_coins: level.coins.len(),
-        ..default()
-    };
+
+    /// The player steers: not crashed and not finished.
+    pub fn in_control(&self) -> bool {
+        !self.finished && self.crash.is_none()
+    }
 }
 
-/// Consumes a restart request: the player, coins, and run start over.
-pub fn restart_run(
+/// Consumes a restart, or respawns the bike once a crash's delay is over.
+pub fn restart_or_respawn(
     mut commands: Commands,
     level: Res<Level>,
-    mut controls: ResMut<Controls>,
+    tuning: Res<BikeTuning>,
     mut run: ResMut<Run>,
-    coins: Query<Entity, With<Coin>>,
-    mut players: Query<
-        (
-            &mut Position,
-            &mut PreviousPosition,
-            &mut Velocity,
-            &mut Grounding,
-        ),
-        With<Player>,
-    >,
+    mut controls: ResMut<Controls>,
+    mut bikes: Query<(Entity, &Bike, &mut BikeState)>,
+    mut bodies: Query<BodyParts, With<TrackedBody>>,
 ) {
-    if !std::mem::take(&mut controls.restart) {
+    let restart = std::mem::take(&mut controls.restart);
+    let ground = if restart {
+        let attempt = run.attempt + 1;
+        *run = Run {
+            attempt,
+            ..Run::new(level.start)
+        };
+        level.start
+    } else if run.crash.is_some_and(|left| left <= 0.0) {
+        run.crash = None;
+        run.attempt += 1;
+        run.respawn
+    } else {
         return;
-    }
-    for (mut position, mut previous, mut velocity, mut grounding) in &mut players {
-        respawn(
-            level.start,
-            &mut position,
-            &mut previous,
-            &mut velocity,
-            &mut grounding,
+    };
+    for (entity, bike, mut state) in &mut bikes {
+        bike::place_bike(
+            &mut commands,
+            entity,
+            bike,
+            &mut state,
+            ground,
+            &tuning,
+            &mut bodies,
         );
     }
-    for coin in &coins {
-        commands.entity(coin).despawn();
-    }
-    for &center in &level.coins {
-        commands.spawn(coin_bundle(center));
-    }
-    *run = Run {
-        total_coins: level.coins.len(),
-        ..default()
-    };
 }
 
-pub fn collect_coins(
-    mut commands: Commands,
-    tuning: Res<PlayerTuning>,
-    mut run: ResMut<Run>,
-    players: Query<&Position, With<Player>>,
-    coins: Query<(Entity, &Position), With<Coin>>,
-) {
-    for player in &players {
-        let body = body_rect(player.0, tuning.size);
-        for (coin, center) in &coins {
-            let nearest = center.0.clamp(body.min, body.max);
-            if nearest.distance(center.0) <= COIN_RADIUS {
-                commands.entity(coin).despawn();
-                run.coins += 1;
-            }
-        }
-    }
-}
-
-pub fn reach_goal(
-    level: Res<Level>,
-    tuning: Res<PlayerTuning>,
-    mut run: ResMut<Run>,
-    players: Query<&Position, With<Player>>,
-) {
-    if run.finished {
+/// Moves the respawn point when the bike reaches a checkpoint.
+pub fn reach_checkpoint(level: Res<Level>, mut run: ResMut<Run>, bikes: Query<&Pose, With<Bike>>) {
+    if !run.in_control() {
         return;
     }
-    let reached = players.iter().any(|player| {
-        !body_rect(player.0, tuning.size)
-            .intersect(level.goal)
-            .is_empty()
-    });
-    if reached {
-        run.finished = true;
-    }
-}
-
-/// Returns the player to the start after falling below the level. Collected
-/// coins and the clock carry on; only Restart resets the run.
-pub fn fall_out(
-    level: Res<Level>,
-    mut run: ResMut<Run>,
-    mut players: Query<
-        (
-            &mut Position,
-            &mut PreviousPosition,
-            &mut Velocity,
-            &mut Grounding,
-        ),
-        With<Player>,
-    >,
-) {
-    for (mut position, mut previous, mut velocity, mut grounding) in &mut players {
-        if position.0.y < level.fall_limit() {
-            respawn(
-                level.start,
-                &mut position,
-                &mut previous,
-                &mut velocity,
-                &mut grounding,
-            );
-            run.falls += 1;
+    for body in &bikes {
+        let reached = level
+            .checkpoints
+            .iter()
+            .find(|checkpoint| checkpoint.zone.contains(body.translation));
+        if let Some(checkpoint) = reached
+            && run.respawn != checkpoint.respawn
+        {
+            run.respawn = checkpoint.respawn;
+            run.checkpoint_cue = Some(0.0);
         }
     }
 }
 
-pub fn tick_clock(time: Res<Time>, mut run: ResMut<Run>) {
+/// Detects a crash: the head touches level geometry, any part touches a hazard,
+/// or the bike falls out. Moves the player's gravestone forward if this is the
+/// farthest crash in this level.
+#[allow(clippy::too_many_arguments)]
+pub fn detect_crash(
+    level: Res<Level>,
+    tuning: Res<BikeTuning>,
+    rapier: ReadRapierContext,
+    active: Res<ActivePlayer>,
+    mut profiles: ResMut<Profiles>,
+    mut run: ResMut<Run>,
+    bikes: Query<(&Bike, &BikeState, &Pose)>,
+    wheels: Query<&Pose, With<Wheel>>,
+    hazards: Query<&Hazard>,
+) {
+    if !run.in_control() {
+        return;
+    }
+    let Ok(context) = rapier.single() else {
+        return;
+    };
+    for (bike, state, body) in &bikes {
+        let (Ok(left), Ok(right)) = (wheels.get(bike.left_wheel), wheels.get(bike.right_wheel))
+        else {
+            continue;
+        };
+        let head = bike::head_position(body, state.facing, &tuning);
+        let mut head_hit = false;
+        let filter = QueryFilter::new()
+            .exclude_sensors()
+            .groups(CollisionGroups::new(BIKE, WORLD));
+        context.intersect_shape(
+            head,
+            0.0,
+            &Collider::ball(tuning.head_radius),
+            filter,
+            |_, _| {
+                head_hit = true;
+                false
+            },
+        );
+        let hull = bike::hull(
+            body,
+            state.facing,
+            [left.translation, right.translation],
+            &tuning,
+        );
+        let hazard_hit = hazards.iter().filter_map(|hazard| hazard.0).any(|shape| {
+            hull.iter()
+                .any(|&(center, radius)| shape.touches(center, radius))
+        });
+        let fell_out = body.translation.y < level.fall_y;
+        if !(head_hit || hazard_hit || fell_out) {
+            continue;
+        }
+        run.crash = Some(tuning.crash_delay);
+        run.deaths += 1;
+        if let Some(player) = active.0 {
+            profiles.record_crash(player, level.id, body.translation.x);
+        }
+        return;
+    }
+}
+
+/// Finishes the run when the bike touches the finish zone.
+pub fn reach_finish(
+    level: Res<Level>,
+    active: Res<ActivePlayer>,
+    mut profiles: ResMut<Profiles>,
+    mut run: ResMut<Run>,
+    bikes: Query<(&Bike, &Pose)>,
+    wheels: Query<&Pose, With<Wheel>>,
+    finishes: Query<&Finish>,
+) {
+    if !run.in_control() {
+        return;
+    }
+    let Some(finish) = finishes.iter().next() else {
+        return;
+    };
+    for (bike, body) in &bikes {
+        let wheel_positions = [bike.left_wheel, bike.right_wheel]
+            .into_iter()
+            .filter_map(|wheel| wheels.get(wheel).ok())
+            .map(|pose| pose.translation);
+        let reached = std::iter::once(body.translation)
+            .chain(wheel_positions)
+            .any(|point| finish.zone.contains(point));
+        if reached {
+            run.finished = true;
+            if let Some(player) = active.0 {
+                profiles.record_finish(player, level.id);
+            }
+            return;
+        }
+    }
+}
+
+/// Advances the clock, the crash delay, and the cues.
+pub fn tick_run(time: Res<Time>, mut run: ResMut<Run>) {
+    let dt = time.delta_secs();
     if !run.finished {
-        run.elapsed += time.delta_secs();
+        run.elapsed += dt;
+    }
+    if let Some(left) = run.crash.as_mut() {
+        *left -= dt;
+    }
+    if let Some((_, age)) = run.flip_cue.as_mut() {
+        *age += dt;
+    }
+    if run.flip_cue.is_some_and(|(_, age)| age > CUE_SECONDS) {
+        run.flip_cue = None;
+    }
+    if let Some(age) = run.checkpoint_cue.as_mut() {
+        *age += dt;
+    }
+    if run.checkpoint_cue.is_some_and(|age| age > CUE_SECONDS) {
+        run.checkpoint_cue = None;
     }
 }

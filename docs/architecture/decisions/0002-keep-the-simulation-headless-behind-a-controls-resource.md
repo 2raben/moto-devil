@@ -2,6 +2,7 @@
 tags: [adr]
 status: accepted
 date: 2026-11-12
+amended-by: [0006-pass-menu-input-through-a-menuinput-resource.md]
 sources:
   - src/main.rs
   - src/simulation.rs
@@ -11,6 +12,12 @@ sources:
 ---
 
 # 0002 — Keep the simulation headless behind a `Controls` resource
+
+> Amended by [ADR 0006](0006-pass-menu-input-through-a-menuinput-resource.md): the
+> input layer also writes menu keys and typed text to a `MenuInput` resource, and
+> `Controls` now carries the bike's `throttle`, `brake`, `tilt`, and latched
+> `jump_pressed`, `turn_pressed`, and `restart`. The boundary below still holds;
+> the starter's `src/player.rs` named in it has been replaced by `src/bike.rs`.
 
 ## Context
 

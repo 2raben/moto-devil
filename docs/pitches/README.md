@@ -45,4 +45,4 @@ What this pitch explicitly does not include.
 
 | Pitch | Status |
 | --- | --- |
-| [Moto Devil: Bike, Spieler, Grabsteine und zwei Levels](moto-devil/pitch--moto-devil.md) | proposed |
+| [Moto Devil: Bike, Spieler, Grabsteine und zwei Levels](moto-devil/pitch--moto-devil.md) | implemented |

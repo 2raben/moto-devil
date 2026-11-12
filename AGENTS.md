@@ -1,9 +1,11 @@
-# Working in this Bevy template
+# Working on Moto Devil
 
-A Rust 2024 game built with Bevy 0.20. The current implementation is still the starter
-platformer: one level from a text map, a player who runs and jumps with hand-written kinematics,
-coins, a goal flag, a following camera, and a HUD. Use the versions in `Cargo.toml`
-and the dependencies pinned by `Cargo.lock`.
+A Rust 2024 game built with Bevy 0.20 and Rapier (`bevy_rapier2d`). Moto Devil is a
+stunt-bike game whose levels lie to you, as shaped in the
+[Moto Devil pitch](docs/pitches/moto-devil/pitch--moto-devil.md): pick a name, ride a
+bike with gas, brake, tilt, jump, and turn around through two levels with traps, and
+leave a gravestone where you crashed farthest. Progress is saved per player. Use the
+versions in `Cargo.toml` and the dependencies pinned by `Cargo.lock`.
 
 ## Start here
 
@@ -13,12 +15,17 @@ Consult the [architectural decision records (ADRs)](docs/architecture/decisions/
 for significant choices and their rationale.
 
 - `src/main.rs`: application composition and window configuration.
-- `src/simulation.rs`, `level.rs`, `player.rs`, `run.rs`: the headless simulation
-  (plugin and fixed-step ordering, the tile map, movement and collision, and the
-  run rules for coins, goal, falling out, and restart).
-- `src/input.rs`, `visuals.rs`, `camera.rs`, `hud.rs`: device input, drawing and
-  render interpolation, the camera, and on-screen text.
-- `src/tests.rs`: headless simulation tests of movement and the run rules.
+- `src/simulation.rs`, `physics.rs`, `flow.rs`, `level.rs`, `levels.rs`, `course.rs`,
+  `bike.rs`, `traps.rs`, `run.rs`, `progress.rs`: the headless simulation (plugin and
+  fixed-step ordering around Rapier, poses, screens and level flow, level data and
+  the built-in levels, spawning a course, the bike and its controls, traps and
+  loops, the run rules, and players with their progress and save format).
+- `src/input.rs`, `save.rs`, `visuals.rs`, `camera.rs`, `hud.rs`, `menu.rs`: device
+  input, the progress file, drawing and render interpolation, the camera, on-screen
+  text, and the player selection screen.
+- `src/tests.rs`: headless simulation tests of the bike, traps, run rules, the flow,
+  and scripted rides through both levels.
+- `assets/fonts/`: the compiled-in UI font and its license.
 - `Cargo.toml` and `.cargo/config.toml`: dependencies, build profiles, and Linux
   linker settings.
 - `shell.nix`: native libraries for NixOS; run Cargo and mise tasks inside `nix-shell` there.
@@ -26,8 +33,7 @@ for significant choices and their rationale.
   `test`, `run`, `check`, and `fmt` tasks.
 - [docs/idea.md](docs/idea.md): game direction and longer-term possibilities.
 - [docs/pitches/](docs/pitches/README.md): bounded feature proposals and companion sketches,
-  written in German. The [Moto Devil pitch](docs/pitches/moto-devil/pitch--moto-devil.md)
-  shapes the bike game that replaces the starter platformer.
+  written in German.
 
 ## Skills
 

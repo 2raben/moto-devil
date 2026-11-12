@@ -1,7 +1,8 @@
 ---
 tags: [adr]
-status: accepted
+status: superseded
 date: 2026-11-12
+superseded-by: [0004-simulate-the-bike-with-rapier.md]
 sources:
   - Cargo.toml
   - src/player.rs
@@ -11,6 +12,10 @@ sources:
 ---
 
 # 0001 — Move the player with hand-written kinematics on a fixed timestep
+
+> Superseded by [ADR 0004](0004-simulate-the-bike-with-rapier.md): the Moto Devil
+> bike is simulated with Rapier, and `src/player.rs` no longer exists. The record
+> below describes the starter platformer as it was.
 
 ## Context
 
@@ -33,7 +38,7 @@ Alternatives considered:
 
 ## Decision
 
-The player is a kinematic box. [player.rs](../../../src/player.rs) keeps its feet
+The player is a kinematic box. `src/player.rs` (since removed) keeps its feet
 position, velocity, and grounding in components; `step_player` runs in
 `FixedUpdate` at Bevy's default 64 Hz. Each step applies horizontal acceleration
 toward the input, a buffered and coyote-timed jump, a jump cut when the button is

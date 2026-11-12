@@ -29,16 +29,19 @@ unused metadata and placeholders before accepting a record.
 that can expose drift. State the expected result and limitations; a search alone
 does not prove correctness.
 
-## Starting a project from the template
+## History
 
-The records below describe the starter game. Keep the ones that still hold for
-your project. When you replace a choice, for example by adopting a physics engine,
-write a new record that supersedes the old one instead of deleting it.
+Records 0001 to 0003 were written for the starter platformer this project began
+from. Moto Devil kept 0002 and 0003, amended 0002 with 0006, and replaced 0001 with
+0004 when it adopted a physics engine. Superseded records stay for their rationale.
 
 ## Decision index
 
 | Record | Status |
 | --- | --- |
-| [0001 — Move the player with hand-written kinematics on a fixed timestep](0001-move-the-player-with-hand-written-kinematics.md) | accepted |
-| [0002 — Keep the simulation headless behind a `Controls` resource](0002-keep-the-simulation-headless-behind-a-controls-resource.md) | accepted |
+| [0001 — Move the player with hand-written kinematics on a fixed timestep](0001-move-the-player-with-hand-written-kinematics.md) | superseded by 0004 |
+| [0002 — Keep the simulation headless behind a `Controls` resource](0002-keep-the-simulation-headless-behind-a-controls-resource.md) | accepted, amended by 0006 |
 | [0003 — Pin the toolchain and run project tasks with mise](0003-run-project-tasks-with-mise.md) | accepted |
+| [0004 — Simulate the bike with Rapier inside the fixed step](0004-simulate-the-bike-with-rapier.md) | accepted |
+| [0005 — Save progress in a versioned text file in the user's data directory](0005-save-progress-in-a-versioned-text-file.md) | accepted |
+| [0006 — Pass menu keys and typed text through a `MenuInput` resource](0006-pass-menu-input-through-a-menuinput-resource.md) | accepted |
