@@ -8,7 +8,7 @@ use bevy::prelude::*;
 
 use crate::bike::{BikeTuning, Controls};
 use crate::course::{self, LevelEntity};
-use crate::level::Level;
+use crate::level::{Country, Level};
 use crate::progress::{self, ActivePlayer, MAX_NAME_CHARS, Profiles};
 use crate::run::Run;
 
@@ -39,6 +39,55 @@ impl Default for Levels {
 impl Levels {
     pub fn ids(&self) -> Vec<&'static str> {
         self.0.iter().map(|level| level.id).collect()
+    }
+
+    /// Where the level at `index` stands in its country: the country, the
+    /// level's number in it counted from 1, and how many levels it has.
+    pub fn place(&self, index: usize) -> Option<(Country, usize, usize)> {
+        let country = self.0.get(index)?.country;
+        let same = |level: &&Level| level.country == country;
+        let first = self.0[..=index]
+            .iter()
+            .rposition(|level| level.country != country)
+            .map_or(0, |i| i + 1);
+        let count = self.0[first..].iter().take_while(same).count();
+        Some((country, index - first + 1, count))
+    }
+
+    /// The country the next level belongs to, when the level at `index` is
+    /// the last one of its country and another country follows.
+    pub fn next_country(&self, index: usize) -> Option<Country> {
+        let here = self.0.get(index)?.country;
+        let next = self.0.get(index + 1)?.country;
+        (next != here).then_some(next)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn levels_know_their_place_in_a_country() {
+        let level = |id, country| Level {
+            id,
+            country,
+            ..crate::levels::level_one()
+        };
+        let levels = Levels(vec![
+            level("a", Country::Training),
+            level("b", Country::Egypt),
+            level("c", Country::Egypt),
+            level("d", Country::Paris),
+        ]);
+        assert_eq!(levels.place(0), Some((Country::Training, 1, 1)));
+        assert_eq!(levels.place(1), Some((Country::Egypt, 1, 2)));
+        assert_eq!(levels.place(2), Some((Country::Egypt, 2, 2)));
+        assert_eq!(levels.place(4), None);
+        assert_eq!(levels.next_country(0), Some(Country::Egypt));
+        assert_eq!(levels.next_country(1), None);
+        assert_eq!(levels.next_country(2), Some(Country::Paris));
+        assert_eq!(levels.next_country(3), None, "the last level");
     }
 }
 

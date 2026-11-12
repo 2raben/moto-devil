@@ -9,7 +9,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::bike::{Bike, BikeTuning};
-use crate::level::{Loop, SPIKE_HEIGHT, TrapDef, TrapKind};
+use crate::level::{Level, Loop, SPIKE_HEIGHT, TrapDef, TrapKind};
 use crate::physics::{GRAVITY, Pose, PreviousPose};
 use crate::run::Run;
 
@@ -30,6 +30,13 @@ pub const RAVEN_WARNING: f32 = 0.35;
 pub const RAVEN_DIVE: f32 = 0.7;
 pub const RAVEN_EXIT: f32 = 1.0;
 pub const RAVEN_RADIUS: f32 = 22.0;
+/// The snow slab trembles and dusts this long before it breaks loose.
+pub const AVALANCHE_WARNING: f32 = 0.9;
+/// Seconds from the release point down to the course.
+pub const AVALANCHE_DROP: f32 = 0.6;
+/// The deadly circle is this share of the drawn snow mass, so grazing its
+/// powdery edge does not count.
+pub const AVALANCHE_CORE: f32 = 0.85;
 
 /// Something deadly to touch, or `None` while it is harmless.
 #[derive(Component, Clone, Copy, Debug, Default, PartialEq)]
@@ -85,6 +92,12 @@ impl Trap {
         self.fired.is_some_and(|t| match self.def.kind {
             TrapKind::Raven { .. } => t > RAVEN_WARNING + RAVEN_DIVE + RAVEN_EXIT,
             TrapKind::Ball { speed, travel, .. } => t * speed > travel,
+            TrapKind::Avalanche {
+                from_x,
+                to_x,
+                speed,
+                ..
+            } => t > AVALANCHE_WARNING + AVALANCHE_DROP + (to_x - from_x).abs() / speed,
             _ => false,
         })
     }
@@ -162,6 +175,53 @@ pub fn pillar_drop(t: f32, fall: f32) -> f32 {
     }
 }
 
+/// The height of a ball of `radius` rolling over `surface` at `x`: it rests on
+/// the highest point under it, so it rolls up onto roofs and over edges instead
+/// of cutting through them.
+pub fn rolling_height(x: f32, radius: f32, surface: impl Fn(f32) -> Option<f32>) -> f32 {
+    const SAMPLES: i32 = 8;
+    (-SAMPLES..=SAMPLES)
+        .filter_map(|i| {
+            let dx = radius * i as f32 / SAMPLES as f32;
+            let lift = (radius * radius - dx * dx).max(0.0).sqrt();
+            surface(x + dx).map(|y| y + lift)
+        })
+        .reduce(f32::max)
+        .unwrap_or(radius)
+}
+
+/// Where an avalanche's snow mass is `t` seconds after it fired, or `None`
+/// while the slab still hangs at its release point.
+pub fn avalanche_center(kind: TrapKind, t: f32, level: Option<&Level>) -> Option<Vec2> {
+    let TrapKind::Avalanche {
+        release,
+        from_x,
+        to_x,
+        radius,
+        speed,
+    } = kind
+    else {
+        return None;
+    };
+    let rolling = |x: f32| {
+        let height = level.map_or(radius, |level| {
+            rolling_height(x, radius, |x| level.surface_height(x))
+        });
+        Vec2::new(x, height)
+    };
+    let age = t - AVALANCHE_WARNING;
+    if age < 0.0 {
+        return None;
+    }
+    if age < AVALANCHE_DROP {
+        let landing = rolling(from_x);
+        let s = age / AVALANCHE_DROP;
+        return Some(release.lerp(landing, s * s));
+    }
+    let travelled = (speed * (age - AVALANCHE_DROP)).min((to_x - from_x).abs());
+    Some(rolling(from_x + (to_x - from_x).signum() * travelled))
+}
+
 fn set_collider(commands: &mut Commands, collider: Entity, enabled: bool) {
     if enabled {
         commands.entity(collider).remove::<ColliderDisabled>();
@@ -227,6 +287,7 @@ pub fn rearm_course(
 pub fn update_traps(
     mut commands: Commands,
     time: Res<Time>,
+    level: Option<Res<Level>>,
     mut traps: Query<(&mut Trap, &mut Pose, &mut Hazard)>,
 ) {
     let dt = time.delta_secs();
@@ -317,6 +378,19 @@ pub fn update_traps(
                     radius: blast_radius,
                 });
             }
+            TrapKind::Avalanche {
+                release, radius, ..
+            } => {
+                let center = t.and_then(|t| avalanche_center(trap.def.kind, t, level.as_deref()));
+                pose.translation = center.map_or(Vec2::ZERO, |c| c - release);
+                pose.angle = 0.0;
+                hazard.0 = center
+                    .filter(|_| !trap.departed())
+                    .map(|center| HazardShape::Circle {
+                        center,
+                        radius: radius * AVALANCHE_CORE,
+                    });
+            }
             TrapKind::JumpingFinish { .. } => {}
         }
     }
@@ -392,6 +466,42 @@ mod tests {
         assert_eq!(pillar_drop(landed + PILLAR_HOLD - 0.01, fall), fall);
         assert!(pillar_drop(landed + PILLAR_HOLD + 0.2, fall) < fall);
         assert_eq!(pillar_drop(100.0, fall), 0.0, "back up for good");
+    }
+
+    #[test]
+    fn a_rolling_ball_climbs_onto_a_step_smoothly() {
+        let step = |x: f32| Some(if x < 100.0 { 0.0 } else { 50.0 });
+        assert!((rolling_height(0.0, 40.0, step) - 40.0).abs() < 1e-3);
+        assert!((rolling_height(200.0, 40.0, step) - 90.0).abs() < 1e-3);
+        let near = rolling_height(80.0, 40.0, step);
+        assert!(near > 40.0 && near < 90.0, "rises before the edge: {near}");
+    }
+
+    #[test]
+    fn an_avalanche_waits_drops_rolls_and_dissolves() {
+        let kind = TrapKind::Avalanche {
+            release: Vec2::new(0.0, 500.0),
+            from_x: 100.0,
+            to_x: 600.0,
+            radius: 50.0,
+            speed: 250.0,
+        };
+        assert_eq!(avalanche_center(kind, 0.5, None), None, "still hanging");
+        let landed = avalanche_center(kind, AVALANCHE_WARNING + AVALANCHE_DROP, None).unwrap();
+        assert!((landed - Vec2::new(100.0, 50.0)).length() < 1e-3);
+        let later = avalanche_center(kind, AVALANCHE_WARNING + AVALANCHE_DROP + 1.0, None);
+        assert_eq!(later, Some(Vec2::new(350.0, 50.0)));
+        let mut trap = Trap::new(
+            TrapDef {
+                kind,
+                trigger: Rect::default(),
+            },
+            None,
+        );
+        trap.fired = Some(AVALANCHE_WARNING + AVALANCHE_DROP + 1.9);
+        assert!(!trap.departed());
+        trap.fired = Some(AVALANCHE_WARNING + AVALANCHE_DROP + 2.1);
+        assert!(trap.departed());
     }
 
     #[test]

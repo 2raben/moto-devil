@@ -9,8 +9,11 @@ it. [AGENTS.md](../../AGENTS.md) is the agent working brief;
 
 The project is one Rust binary crate implementing the
 [Moto Devil pitch](../pitches/moto-devil/pitch--moto-devil.md): a stunt-bike game
-with a player selection, three levels with traps, saved progress, and gravestones.
-The third level implements the [Fallen & Power-ups pitch](../pitches/fallen-powerups/pitch--fallen-powerups.md).
+with a player selection, levels with traps grouped into countries, saved progress,
+and gravestones. The third level implements the
+[Fallen & Power-ups pitch](../pitches/fallen-powerups/pitch--fallen-powerups.md); the
+[Länder pitch](../pitches/laender/pitch--laender.md) adds five countries with three
+levels each.
 [Cargo.toml](../../Cargo.toml) uses Rust edition 2024, Bevy 0.20 with default
 features disabled and the `2d`, `audio`, and `ui` feature sets, and `bevy_rapier2d`
 0.37 with only `dim2` ([ADR 0004](decisions/0004-simulate-the-bike-with-rapier.md)).
@@ -37,9 +40,10 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
 - [flow.rs](../../src/flow.rs): the `Screen` state (`SelectPlayer`, `Playing`), the
   `Levels` list and `CurrentLevel`, `MenuInput`/`MenuAction`, the `Selection`, and
   the systems that pick a player, load levels, and move between them.
-- [level.rs](../../src/level.rs) and [levels.rs](../../src/levels.rs): the `Level`
-  data type (ground profile, solids, loops, spikes, traps, checkpoints, start,
-  finish, bounds, fall line, contact effects) and the three built-in levels.
+- [level.rs](../../src/level.rs) and [levels/](../../src/levels/mod.rs): the `Level`
+  data type (country, ground profile, solids, loops, spikes, traps, checkpoints,
+  start, finish, bounds, fall line, contact effects), the `Country` enum, and the
+  built-in levels with one module per country.
 - [course.rs](../../src/course.rs): spawns a level's colliders, traps, finish, and
   bike, all marked `LevelEntity`.
 - [bike.rs](../../src/bike.rs): `Controls`, `BikeTuning`, the bike's body and wheels,
@@ -47,7 +51,7 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
 - [traps.rs](../../src/traps.rs): `Trap`, `Hazard`, `Finish`, and loop state, with
   the systems that re-arm, move, trigger, and switch them.
 - [effects.rs](../../src/effects.rs): contact definitions and `CourseEffect` /
-  `RideEffects` state for cactus, mud, trampoline, and jet pickups.
+  `RideEffects` state for cactus, mud, quicksand, trampoline, and jet pickups.
 - [run.rs](../../src/run.rs): the `Run` resource (time, deaths, flips, finish, crash
   delay, respawn point, attempt) and the rules for restart, respawn, checkpoints,
   crashes, the finish, and the clock.
@@ -62,7 +66,10 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
   ([ADR 0005](decisions/0005-save-progress-in-a-versioned-text-file.md)). The only
   module that touches files.
 - [visuals.rs](../../src/visuals.rs): the palette; ground, loop, spike, trap, flag,
-  bike, wheel, and gravestone drawings; interpolation from `Pose`.
+  bike, wheel, and gravestone drawings in the country's colours; interpolation from
+  `Pose`.
+- [backdrop.rs](../../src/backdrop.rs): each country's `Theme` and its two
+  parallax backdrop layers, built from simple generated shapes.
 - [camera.rs](../../src/camera.rs): a `Camera2d` with a minimum 960 × 540 view that
   follows the bike and stays inside the level.
 - [hud.rs](../../src/hud.rs): the progress panel, controls reminder, cues
@@ -159,6 +166,33 @@ travel/time limits remove their danger and drawing until the next attempt. The
 rising block mirrors the falling pillar's timing. These scripted hazards do not
 push the bike or react to other geometry.
 
+### Countries, quicksand, and avalanches
+
+[ADR 0008](decisions/0008-group-levels-into-countries-with-presentation-themes.md)
+records the design. Every level names its `Country`; the play order is Übungsgelände,
+Ägypten, Australien, USA, Paris, and Schweiz, with each country's levels in a row.
+`Levels::place` gives a level's country and number for the HUD and the player
+selection, and the finish panel names the next country after a country's last
+level. Each level announces its country and name for its first two seconds.
+
+Each country level strings tricks together: blocks that rise from the ground or
+fall out of the empty sky, hatches and bridges that give way, spikes, finishes that
+run away (sometimes twice), and the country's own trap. Presentation draws the same
+trap kinds in each country's style: kangaroos (hopping balls) in Australia,
+tumbleweeds in the USA, barrels and pigeons on the Paris roofs, snowballs in
+Switzerland.
+
+Quicksand raises a sink meter while a wheel touches it, slower at speed, cuts gas
+and top speed, and adds drag; out of the sand the meter falls again, and a full
+meter is a crash. Sand drawn over the bike shows how far it has sunk.
+
+An avalanche hangs as a cracked snow slab at its release point, trembles for
+`AVALANCHE_WARNING`, drops to the course, and rolls at a fixed speed to its end,
+where it dissolves. Its height follows `Level::surface_height` with a rolling-ball
+envelope, so it rolls over a gallery roof (a solid above the track) and the bike
+can wait under the roof. One from behind must be outrun, or sheltered from when it
+is too fast.
+
 ### Progress and gravestones
 
 `Profiles` lists the players; `ActivePlayer` is the one riding. A crash farther right
@@ -201,12 +235,17 @@ formatting, Clippy, build, test, and manual-run checks. There is no CI workflow.
   braking, jumping, flips, self-righting, the ground lean limit, turning around, head
   crashes and respawn, falling out, pop-up spikes, the finish and progress,
   checkpoints, restart, the player selection and level flow, and scripted rides that
-  finish all three built-in levels, including the loop.
+  finish the first two built-in levels, including the loop.
 - [tests/effects.rs](../../src/tests/effects.rs) covers contact effects, the
   trampoline/cactus combination, jet hold/release/exhaustion and reset, overlapping
   pickups with a lethal hazard, repeatable movers and the complete third level.
+- [tests/countries.rs](../../src/tests/countries.rs) rides every country level with
+  a scripted pilot that knows its tricks: it waits out timed traps, shelters from
+  avalanches, jumps where its plan says, and turns when the finish runs away. Each
+  ride must finish without a crash and meet every trap except jumped hatches.
 - [tests/rendered.rs](../../src/tests/rendered.rs) provides opt-in Linux GPU
-  captures of the trampoline/cactus encounter and jet flight, using the actual
+  captures of the trampoline/cactus encounter, jet flight, and any country level
+  (`MOTO_SHOT=<level id>,<start x>,<frames>,<throttle>`), using the actual
   presentation plugins. Run separately as documented in the contribution guide.
 - The input regression test verifies held jet intent and latched jump presses
   have distinct release semantics.

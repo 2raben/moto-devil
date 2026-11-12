@@ -9,21 +9,21 @@ use bevy::asset::RenderAssetUsages;
 use bevy::mesh::{Indices, PrimitiveTopology};
 use bevy::prelude::*;
 
+use crate::backdrop::{SNOW, Theme, theme};
 use crate::bike::{Bike, BikeState, BikeTuning, Wheel};
 use crate::course::{LevelRoot, StaticSpikes};
 use crate::effects::{CourseEffect, EffectKind, RideEffects, cactus_parts};
-use crate::level::{Level, SPIKE_HEIGHT, SPIKE_WIDTH, Spikes, TrapKind};
+use crate::level::{Country, Level, SPIKE_HEIGHT, SPIKE_WIDTH, Spikes, TrapKind};
 use crate::physics::{Pose, PreviousPose};
 use crate::progress::{ActivePlayer, Grave, Profiles};
 use crate::run::Run;
-use crate::traps::{Finish, TNT_BLAST, TNT_FUSE, Trap};
+use crate::traps::{AVALANCHE_WARNING, Finish, TNT_BLAST, TNT_FUSE, Trap};
 
 pub mod palette {
     use bevy::prelude::Color;
 
     pub const SKY: Color = Color::srgb(0.55, 0.76, 0.93);
     pub const GROUND: Color = Color::srgb(0.45, 0.31, 0.21);
-    pub const GRASS: Color = Color::srgb(0.38, 0.7, 0.3);
     pub const ROCK: Color = Color::srgb(0.42, 0.42, 0.46);
     pub const TRACK: Color = Color::srgb(0.3, 0.3, 0.34);
     pub const SPIKE: Color = Color::srgb(0.88, 0.2, 0.2);
@@ -48,6 +48,11 @@ pub mod palette {
     pub const TEXT: Color = Color::srgb(0.95, 0.96, 0.98);
     pub const MUTED: Color = Color::srgb(0.85, 0.88, 0.92);
     pub const HIGHLIGHT: Color = Color::srgb(0.16, 0.45, 0.8);
+    pub const KANGAROO: Color = Color::srgb(0.66, 0.42, 0.24);
+    pub const TUMBLEWEED: Color = Color::srgb(0.62, 0.48, 0.28);
+    pub const BARREL: Color = Color::srgb(0.48, 0.3, 0.18);
+    pub const PIGEON: Color = Color::srgb(0.5, 0.52, 0.58);
+    pub const SNOW_SHADE: Color = Color::srgb(0.78, 0.84, 0.92);
 }
 
 /// Draw order, back to front.
@@ -113,6 +118,21 @@ struct MovingHazard;
 #[derive(Component)]
 struct JetFlame;
 
+/// Follows its entity's position but not its rotation, like a hopping
+/// kangaroo or a sliding snow mass.
+#[derive(Component)]
+struct Upright;
+
+/// The snow slab that hangs at an avalanche's release point until it breaks.
+#[derive(Component)]
+struct Cornice {
+    at: Vec2,
+}
+
+/// Sand that rises over the bike while it sinks into quicksand.
+#[derive(Component)]
+struct SinkingSand;
+
 #[derive(Component)]
 struct EffectVisual;
 
@@ -145,6 +165,8 @@ impl Plugin for VisualsPlugin {
                     animate_tnt,
                     animate_effects,
                     animate_movers,
+                    animate_avalanches,
+                    sink_into_sand,
                 )
                     .before(TransformSystems::Propagate)
                     .before(crate::camera::CameraSystems),
@@ -164,11 +186,12 @@ fn mesh_from(positions: Vec<[f32; 3]>, indices: Vec<u32>) -> Mesh {
     .with_inserted_indices(Indices::U32(indices))
 }
 
-/// Quads from each sloped or flat ground segment down to `floor`, and a grass
-/// strip along the top.
-fn ground_meshes(points: &[Vec2], floor: f32) -> (Mesh, Mesh) {
+/// Quads from each sloped or flat ground segment down to `floor`, a surface
+/// strip along the top, and snow instead of the strip above `snow_line`.
+fn ground_meshes(points: &[Vec2], floor: f32, snow_line: Option<f32>) -> (Mesh, Mesh, Mesh) {
     let mut fill = (Vec::new(), Vec::new());
     let mut grass = (Vec::new(), Vec::new());
+    let mut snow = (Vec::new(), Vec::new());
     let quad = |(positions, indices): &mut (Vec<[f32; 3]>, Vec<u32>), corners: [Vec2; 4]| {
         let base = positions.len() as u32;
         positions.extend(corners.map(|c| [c.x, c.y, 0.0]));
@@ -184,9 +207,44 @@ fn ground_meshes(points: &[Vec2], floor: f32) -> (Mesh, Mesh) {
             [Vec2::new(a.x, floor), Vec2::new(b.x, floor), b, a],
         );
         let down = Vec2::new(0.0, GRASS_DEPTH);
-        quad(&mut grass, [a - down, b - down, b, a]);
+        let snowy = snow_line.is_some_and(|line| a.y.min(b.y) > line);
+        let strip = if snowy { &mut snow } else { &mut grass };
+        quad(strip, [a - down * 2.0, b - down * 2.0, b, a]);
     }
-    (mesh_from(fill.0, fill.1), mesh_from(grass.0, grass.1))
+    (
+        mesh_from(fill.0, fill.1),
+        mesh_from(grass.0, grass.1),
+        mesh_from(snow.0, snow.1),
+    )
+}
+
+/// Rows of windows under each flat roof, so the ground reads as buildings.
+fn windows_mesh(points: &[Vec2], lowest: f32) -> Mesh {
+    let mut positions = Vec::new();
+    let mut indices = Vec::new();
+    for pair in points.windows(2) {
+        let (a, b) = (pair[0], pair[1]);
+        if (a.y - b.y).abs() > 1.0 || b.x - a.x < 90.0 || a.y < lowest {
+            continue;
+        }
+        let columns = ((b.x - a.x - 30.0) / 60.0).floor() as i32;
+        let margin = (b.x - a.x - columns as f32 * 60.0) * 0.5;
+        for row in 0..5 {
+            let top = a.y - 40.0 - row as f32 * 70.0;
+            for column in 0..columns {
+                let left = a.x + margin + column as f32 * 60.0 + 15.0;
+                let base = positions.len() as u32;
+                positions.extend([
+                    [left, top - 40.0, 0.0],
+                    [left + 30.0, top - 40.0, 0.0],
+                    [left + 30.0, top, 0.0],
+                    [left, top, 0.0],
+                ]);
+                indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+            }
+        }
+    }
+    mesh_from(positions, indices)
 }
 
 /// A row of spike triangles with its bottom-left corner at the origin.
@@ -259,24 +317,33 @@ fn draw_scenery(
         return;
     };
     for root in &roots {
+        let theme = theme(level.country);
         let floor = level.bounds.min.y - 600.0;
-        let (fill, grass) = ground_meshes(&level.ground, floor);
-        commands.spawn((
-            VisualOf(root),
-            Mesh2d(meshes.add(fill)),
-            MeshMaterial2d(materials.add(palette::GROUND)),
-            Transform::from_xyz(0.0, 0.0, layer::GROUND),
-        ));
-        commands.spawn((
-            VisualOf(root),
-            Mesh2d(meshes.add(grass)),
-            MeshMaterial2d(materials.add(palette::GRASS)),
-            Transform::from_xyz(0.0, 0.0, layer::GROUND + 0.1),
-        ));
+        let (fill, grass, snow) = ground_meshes(&level.ground, floor, theme.snow_line);
+        for (mesh, color, z) in [
+            (fill, theme.ground, 0.0),
+            (grass, theme.surface, 0.1),
+            (snow, SNOW, 0.1),
+        ] {
+            commands.spawn((
+                VisualOf(root),
+                Mesh2d(meshes.add(mesh)),
+                MeshMaterial2d(materials.add(color)),
+                Transform::from_xyz(0.0, 0.0, layer::GROUND + z),
+            ));
+        }
+        if let Some(color) = theme.windows {
+            commands.spawn((
+                VisualOf(root),
+                Mesh2d(meshes.add(windows_mesh(&level.ground, level.fall_y + 100.0))),
+                MeshMaterial2d(materials.add(color)),
+                Transform::from_xyz(0.0, 0.0, layer::GROUND + 0.05),
+            ));
+        }
         for solid in &level.solids {
             commands.spawn((
                 VisualOf(root),
-                sprite(palette::ROCK, solid.size(), solid.center(), layer::SCENERY),
+                sprite(theme.rock, solid.size(), solid.center(), layer::SCENERY),
             ));
         }
         for track in &level.loops {
@@ -322,8 +389,13 @@ fn draw_traps(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    level: Option<Res<Level>>,
     traps: Query<(Entity, &Trap), Added<Trap>>,
 ) {
+    let country = level
+        .as_ref()
+        .map_or(Country::Training, |level| level.country);
+    let theme = theme(country);
     for (entity, trap) in &traps {
         match trap.def.kind {
             TrapKind::DropSlab { slab } => {
@@ -356,11 +428,17 @@ fn draw_traps(
                         base: pillar.center(),
                         z: layer::TRAP,
                     },
-                    Sprite::from_color(palette::ROCK, pillar.size()),
+                    Sprite::from_color(theme.rock, pillar.size()),
                     Transform::default(),
                 ));
             }
             TrapKind::Raven { from, .. } => {
+                // Paris has pigeons instead of ravens; they strike the same way.
+                let feathers = if country == Country::Paris {
+                    palette::PIGEON
+                } else {
+                    palette::TYRE
+                };
                 commands
                     .spawn((
                         VisualOf(entity),
@@ -375,12 +453,12 @@ fn draw_traps(
                     .with_children(|parent| {
                         parent.spawn((
                             Mesh2d(meshes.add(Circle::new(12.0))),
-                            MeshMaterial2d(materials.add(palette::TYRE)),
+                            MeshMaterial2d(materials.add(feathers)),
                             Transform::default(),
                         ));
                         for side in [-1.0, 1.0] {
                             parent.spawn(bar(
-                                palette::TYRE,
+                                feathers,
                                 Vec2::ZERO,
                                 Vec2::new(side * 22.0, 16.0),
                                 7.0,
@@ -398,26 +476,209 @@ fn draw_traps(
                         ));
                     });
             }
-            TrapKind::Ball { start, radius, .. } => {
+            TrapKind::Ball {
+                start,
+                radius,
+                bounce_height,
+                ..
+            } => {
+                let hopping = bounce_height > 0.0;
+                let mut mover = commands.spawn((
+                    VisualOf(entity),
+                    MovingHazard,
+                    Follow {
+                        base: start,
+                        z: layer::TRAP,
+                    },
+                    Transform::default(),
+                    Visibility::default(),
+                ));
+                let mut part = |mesh: Mesh, color: Color, at: Vec2, z: f32| {
+                    (
+                        Mesh2d(meshes.add(mesh)),
+                        MeshMaterial2d(materials.add(color)),
+                        Transform::from_translation(at.extend(z)),
+                    )
+                };
+                let r = radius;
+                match (country, hopping) {
+                    (Country::Australia, true) => {
+                        // A kangaroo hopping towards the bike, drawn inside the
+                        // ball's deadly circle.
+                        mover.insert(Upright);
+                        let fur = palette::KANGAROO;
+                        mover.with_children(|p| {
+                            p.spawn(part(
+                                Ellipse::new(0.5 * r, 0.7 * r).into(),
+                                fur,
+                                Vec2::new(0.15 * r, -0.05 * r),
+                                0.0,
+                            ));
+                            p.spawn(part(
+                                Circle::new(0.28 * r).into(),
+                                fur,
+                                Vec2::new(-0.4 * r, 0.6 * r),
+                                0.1,
+                            ));
+                            p.spawn(part(
+                                Triangle2d::new(
+                                    Vec2::new(-0.35, 0.8) * r,
+                                    Vec2::new(-0.2, 0.8) * r,
+                                    Vec2::new(-0.22, 1.05) * r,
+                                )
+                                .into(),
+                                fur,
+                                Vec2::ZERO,
+                                0.1,
+                            ));
+                            p.spawn(part(
+                                Circle::new(0.05 * r).into(),
+                                palette::TYRE,
+                                Vec2::new(-0.5 * r, 0.65 * r),
+                                0.2,
+                            ));
+                            p.spawn(bar(
+                                fur,
+                                Vec2::new(0.5, -0.3) * r,
+                                Vec2::new(1.0, -0.85) * r,
+                                0.16 * r,
+                                0.0,
+                            ));
+                            p.spawn(bar(
+                                fur,
+                                Vec2::new(-0.35, -0.9) * r,
+                                Vec2::new(0.35, -0.9) * r,
+                                0.16 * r,
+                                0.0,
+                            ));
+                            p.spawn(bar(
+                                fur,
+                                Vec2::new(-0.2, 0.15) * r,
+                                Vec2::new(-0.55, 0.0) * r,
+                                0.1 * r,
+                                0.1,
+                            ));
+                        });
+                    }
+                    (Country::Usa, _) => {
+                        // A tumbleweed: a loose ring of twigs.
+                        mover.with_children(|p| {
+                            p.spawn(part(
+                                Annulus::new(0.8 * r, r).into(),
+                                palette::TUMBLEWEED,
+                                Vec2::ZERO,
+                                0.0,
+                            ));
+                            for angle in [0.0f32, 1.0, 2.1] {
+                                let d = Vec2::from_angle(angle) * 0.9 * r;
+                                p.spawn(bar(palette::TUMBLEWEED, -d, d, 0.12 * r, 0.1));
+                            }
+                        });
+                    }
+                    (Country::Paris, _) => {
+                        // A barrel rolling over the roofs.
+                        mover.with_children(|p| {
+                            p.spawn(part(
+                                Circle::new(r).into(),
+                                palette::BARREL,
+                                Vec2::ZERO,
+                                0.0,
+                            ));
+                            p.spawn(part(
+                                Annulus::new(0.62 * r, 0.72 * r).into(),
+                                palette::TYRE,
+                                Vec2::ZERO,
+                                0.1,
+                            ));
+                            p.spawn(bar(
+                                palette::TYRE,
+                                Vec2::new(-0.95, 0.0) * r,
+                                Vec2::new(0.95, 0.0) * r,
+                                0.1 * r,
+                                0.1,
+                            ));
+                        });
+                    }
+                    (Country::Switzerland, _) => {
+                        mover.with_children(|p| {
+                            p.spawn(part(Circle::new(r).into(), SNOW, Vec2::ZERO, 0.0));
+                            p.spawn(part(
+                                Circle::new(0.35 * r).into(),
+                                palette::SNOW_SHADE,
+                                Vec2::new(0.35, -0.3) * r,
+                                0.1,
+                            ));
+                        });
+                    }
+                    _ => {
+                        mover.with_children(|p| {
+                            p.spawn(part(Circle::new(r).into(), theme.rock, Vec2::ZERO, 0.0));
+                            p.spawn(bar(
+                                palette::SPIKE,
+                                Vec2::new(-0.7 * r, 0.0),
+                                Vec2::new(0.7 * r, 0.0),
+                                5.0,
+                                0.1,
+                            ));
+                        });
+                    }
+                }
+            }
+            TrapKind::Avalanche {
+                release, radius, ..
+            } => {
+                commands
+                    .spawn((
+                        VisualOf(entity),
+                        Cornice { at: release },
+                        Transform::from_translation(release.extend(layer::TRAP)),
+                        Visibility::default(),
+                    ))
+                    .with_children(|p| {
+                        p.spawn((
+                            Mesh2d(meshes.add(Ellipse::new(radius * 1.3, radius * 0.45))),
+                            MeshMaterial2d(materials.add(SNOW)),
+                            Transform::default(),
+                        ));
+                        // A crack shows where the slab will break.
+                        p.spawn(bar(
+                            palette::SNOW_SHADE,
+                            Vec2::new(-0.6 * radius, 0.1 * radius),
+                            Vec2::new(0.5 * radius, -0.15 * radius),
+                            4.0,
+                            0.1,
+                        ));
+                    });
                 commands
                     .spawn((
                         VisualOf(entity),
                         MovingHazard,
+                        Upright,
                         Follow {
-                            base: start,
-                            z: layer::TRAP,
+                            base: release,
+                            z: layer::BIKE + 0.5,
                         },
-                        Mesh2d(meshes.add(Circle::new(radius))),
-                        MeshMaterial2d(materials.add(palette::ROCK)),
                         Transform::default(),
+                        Visibility::Hidden,
                     ))
-                    .with_child(bar(
-                        palette::SPIKE,
-                        Vec2::new(-radius * 0.7, 0.0),
-                        Vec2::new(radius * 0.7, 0.0),
-                        5.0,
-                        0.1,
-                    ));
+                    .with_children(|p| {
+                        p.spawn((
+                            Mesh2d(meshes.add(Circle::new(radius))),
+                            MeshMaterial2d(materials.add(SNOW)),
+                            Transform::default(),
+                        ));
+                        for (offset, size) in [
+                            (Vec2::new(-0.8, 0.5), 0.55),
+                            (Vec2::new(0.75, 0.55), 0.5),
+                            (Vec2::new(0.0, 0.9), 0.45),
+                        ] {
+                            p.spawn((
+                                Mesh2d(meshes.add(Circle::new(radius * size))),
+                                MeshMaterial2d(materials.add(palette::SNOW_SHADE)),
+                                Transform::from_translation((offset * radius).extend(-0.1)),
+                            ));
+                        }
+                    });
             }
             TrapKind::Tnt {
                 crate_box,
@@ -466,8 +727,24 @@ fn draw_traps(
 
 fn draw_effects(
     mut commands: Commands,
+    level: Option<Res<Level>>,
     effects: Query<(Entity, &CourseEffect), Added<CourseEffect>>,
+    bikes: Query<Entity, Added<Bike>>,
 ) {
+    let theme = theme(
+        level
+            .as_ref()
+            .map_or(Country::Training, |level| level.country),
+    );
+    for bike in &bikes {
+        commands.spawn((
+            VisualOf(bike),
+            SinkingSand,
+            Sprite::from_color(theme.quicksand, Vec2::ONE),
+            Transform::default(),
+            Visibility::Hidden,
+        ));
+    }
     for (entity, effect) in &effects {
         let zone = effect.def.zone;
         let center = zone.center();
@@ -490,6 +767,7 @@ fn draw_effects(
                         ));
                     }
                 }
+                EffectKind::Quicksand => quicksand(parts, &theme, size),
                 EffectKind::Mud => {
                     parts.spawn(sprite(palette::GROUND, size, Vec2::ZERO, 0.0));
                     for i in 0..5 {
@@ -550,6 +828,79 @@ fn draw_effects(
     }
 }
 
+/// Pale sand with small swirls, a little higher than the ground around it.
+fn quicksand(parts: &mut ChildSpawnerCommands, theme: &Theme, size: Vec2) {
+    parts.spawn(sprite(
+        theme.quicksand,
+        size + Vec2::Y * 4.0,
+        Vec2::Y * 2.0,
+        0.0,
+    ));
+    let swirls = (size.x / 70.0).max(1.0) as i32;
+    for i in 0..swirls {
+        let x = -0.5 * size.x + (i as f32 + 0.5) * size.x / swirls as f32;
+        parts.spawn(bar(
+            theme.ground,
+            Vec2::new(x - 12.0, 1.0),
+            Vec2::new(x + 12.0, 5.0),
+            2.5,
+            0.1,
+        ));
+        parts.spawn(bar(
+            theme.ground,
+            Vec2::new(x - 6.0, 5.0),
+            Vec2::new(x + 4.0, 0.0),
+            2.0,
+            0.1,
+        ));
+    }
+}
+
+/// Raises sand over a sinking bike, in front of it, up to the helmet when it
+/// is buried.
+fn sink_into_sand(
+    bikes: Query<(&Pose, &RideEffects)>,
+    mut sand: Query<(&VisualOf, &mut Transform, &mut Visibility), With<SinkingSand>>,
+) {
+    for (target, mut transform, mut visibility) in &mut sand {
+        let Ok((body, ride)) = bikes.get(target.0) else {
+            continue;
+        };
+        let (Some(surface), true) = (ride.sand_surface, ride.sink > 0.0) else {
+            visibility.set_if_neq(Visibility::Hidden);
+            continue;
+        };
+        let height = 8.0 + ride.sink * 100.0;
+        transform.translation = Vec3::new(
+            body.translation.x,
+            surface - 8.0 + 0.5 * height,
+            layer::BIKE + 0.6,
+        );
+        transform.scale = Vec3::new(130.0, height, 1.0);
+        visibility.set_if_neq(Visibility::Inherited);
+    }
+}
+
+/// Shows the hanging slab until it breaks, shaking during the warning.
+fn animate_avalanches(
+    traps: Query<&Trap>,
+    mut cornices: Query<(&VisualOf, &Cornice, &mut Transform, &mut Visibility)>,
+) {
+    for (target, cornice, mut transform, mut visibility) in &mut cornices {
+        let Ok(trap) = traps.get(target.0) else {
+            continue;
+        };
+        let hanging = trap.fired.is_none_or(|t| t < AVALANCHE_WARNING);
+        visibility.set_if_neq(if hanging {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        });
+        let shake = trap.fired.map_or(0.0, |t| 4.0 * (t * 60.0).sin());
+        transform.translation.x = cornice.at.x + shake;
+    }
+}
+
 #[allow(clippy::type_complexity)]
 fn animate_effects(
     effects: Query<&CourseEffect>,
@@ -578,7 +929,12 @@ fn animate_movers(
     mut visuals: Query<(&VisualOf, &mut Visibility), With<MovingHazard>>,
 ) {
     for (target, mut visibility) in &mut visuals {
-        *visibility = if traps.get(target.0).is_ok_and(|t| !t.departed()) {
+        let shown = traps.get(target.0).is_ok_and(|t| {
+            let released = !matches!(t.def.kind, TrapKind::Avalanche { .. })
+                || t.fired.is_some_and(|age| age >= AVALANCHE_WARNING);
+            released && !t.departed()
+        });
+        *visibility = if shown {
             Visibility::Inherited
         } else {
             Visibility::Hidden
@@ -906,15 +1262,19 @@ fn lerp_angle(a: f32, b: f32, t: f32) -> f32 {
 fn follow_poses(
     fixed: Res<Time<Fixed>>,
     poses: Query<(&Pose, &PreviousPose)>,
-    mut visuals: Query<(&VisualOf, &Follow, &mut Transform)>,
+    mut visuals: Query<(&VisualOf, &Follow, &mut Transform, Has<Upright>)>,
 ) {
     let blend = fixed.overstep_fraction();
-    for (target, follow, mut transform) in &mut visuals {
+    for (target, follow, mut transform, upright) in &mut visuals {
         let Ok((pose, previous)) = poses.get(target.0) else {
             continue;
         };
         let at = previous.0.translation.lerp(pose.translation, blend) + follow.base;
-        let angle = lerp_angle(previous.0.angle, pose.angle, blend);
+        let angle = if upright {
+            0.0
+        } else {
+            lerp_angle(previous.0.angle, pose.angle, blend)
+        };
         *transform = Transform::from_translation(at.extend(follow.z))
             .with_rotation(Quat::from_rotation_z(angle));
     }

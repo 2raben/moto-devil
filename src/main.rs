@@ -1,5 +1,6 @@
 //! Moto Devil: a stunt-bike game whose levels lie to you.
 
+mod backdrop;
 mod bike;
 mod camera;
 mod course;
@@ -38,6 +39,7 @@ fn main() -> AppExit {
             save::SavePlugin,
             input::InputPlugin,
             visuals::VisualsPlugin,
+            backdrop::BackdropPlugin,
             camera::CameraPlugin,
             hud::HudPlugin,
             menu::MenuPlugin,

@@ -12,7 +12,9 @@ use std::f32::consts::TAU;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::effects::{JET_ACCEL, JET_MAX_RISE, MUD_SPEED_FACTOR, RideEffects};
+use crate::effects::{
+    JET_ACCEL, JET_MAX_RISE, MUD_SPEED_FACTOR, QUICKSAND_DRAG, QUICKSAND_SPEED_FACTOR, RideEffects,
+};
 use crate::physics::{Pose, PreviousPose, Teleported, TrackedBody, bike_groups};
 use crate::run::Run;
 
@@ -508,13 +510,22 @@ pub fn drive_bike(
             let slow = tuning.brake_accel * brake * dt;
             push = -along.signum() * slow.min(along.abs());
         } else if throttle > 0.0 && state.rear_contact() {
-            let factor = if effects.muddy { MUD_SPEED_FACTOR } else { 1.0 };
+            let mut factor = 1.0;
+            if effects.muddy {
+                factor *= MUD_SPEED_FACTOR;
+            }
+            if effects.sand_surface.is_some() {
+                factor *= QUICKSAND_SPEED_FACTOR;
+            }
             let wanted = tuning.max_speed * throttle * factor;
             push = (wanted - along).clamp(0.0, tuning.drive_accel * factor * dt);
         }
         if effects.muddy && grounded {
             let limit = tuning.max_speed * MUD_SPEED_FACTOR;
             push -= along.signum() * (along.abs() - limit).max(0.0).min(tuning.brake_accel * dt);
+        }
+        if effects.sand_surface.is_some() && grounded {
+            push -= along * QUICKSAND_DRAG * dt;
         }
         let jet_push = (JET_MAX_RISE - body_velocity.linear.y)
             .max(0.0)

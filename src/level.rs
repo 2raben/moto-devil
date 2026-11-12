@@ -46,6 +46,34 @@ pub struct Loop {
     pub radius: f32,
 }
 
+/// The country a level belongs to. A country's levels are played in a row, and
+/// presentation draws each country with its own sky, ground, and backdrop.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum Country {
+    /// The first three levels, where the shared traps are learned.
+    #[default]
+    Training,
+    Egypt,
+    Australia,
+    Usa,
+    Paris,
+    Switzerland,
+}
+
+impl Country {
+    /// Shown to the player.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Training => "Übungsgelände",
+            Self::Egypt => "Ägypten",
+            Self::Australia => "Australien",
+            Self::Usa => "USA",
+            Self::Paris => "Paris",
+            Self::Switzerland => "Schweiz",
+        }
+    }
+}
+
 /// What a trap does once the bike enters its trigger zone.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum TrapKind {
@@ -72,6 +100,16 @@ pub enum TrapKind {
     Tnt { crate_box: Rect, blast_radius: f32 },
     /// The finish flag jumps to `to`, usually behind the bike.
     JumpingFinish { to: Rect },
+    /// A snow slab breaks loose at `release`, slides down to the course at
+    /// `from_x`, and rolls along the course surface to `to_x`, where it
+    /// dissolves. `to_x < from_x` makes it come towards a bike riding right.
+    Avalanche {
+        release: Vec2,
+        from_x: f32,
+        to_x: f32,
+        radius: f32,
+        speed: f32,
+    },
 }
 
 /// A trap and the invisible zone that fires it.
@@ -96,6 +134,7 @@ pub struct Level {
     pub id: &'static str,
     /// Shown to the player.
     pub name: &'static str,
+    pub country: Country,
     pub ground: Vec<Vec2>,
     /// Extra solid blocks, such as a ceiling.
     pub solids: Vec<Rect>,
@@ -131,6 +170,20 @@ impl Level {
                 }
                 Some(a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x))
             })
+            .reduce(f32::max)
+    }
+
+    /// The height an object rolling along the course rests on at `x`: the ground,
+    /// or the top of a solid above it, such as an avalanche gallery's roof.
+    pub fn surface_height(&self, x: f32) -> Option<f32> {
+        let roofs = self
+            .solids
+            .iter()
+            .filter(|solid| (solid.min.x..=solid.max.x).contains(&x))
+            .map(|solid| solid.max.y);
+        self.ground_height(x)
+            .into_iter()
+            .chain(roofs)
             .reduce(f32::max)
     }
 
@@ -210,6 +263,16 @@ impl Profile {
         self
     }
 
+    /// A pit from `left` to `right` with its bottom at `bottom`; the ground
+    /// continues at the current height behind it.
+    pub fn pit(self, left: f32, right: f32, bottom: f32) -> Self {
+        let y = self.0.last().expect("a profile has a start").y;
+        self.to(left, y)
+            .to(left, bottom)
+            .to(right, bottom)
+            .to(right, y)
+    }
+
     pub fn build(self) -> Vec<Vec2> {
         self.0
     }
@@ -223,6 +286,7 @@ mod tests {
         Level {
             id: "test",
             name: "Test",
+            country: Country::Training,
             ground: Profile::start(0.0, 0.0)
                 .to(100.0, 0.0)
                 .to(100.0, -50.0)
@@ -265,6 +329,14 @@ mod tests {
         let mut backwards = flat();
         backwards.ground.push(Vec2::new(10.0, 0.0));
         assert!(backwards.validate().is_err());
+    }
+
+    #[test]
+    fn surfaces_include_roofs_above_the_ground() {
+        let mut level = flat();
+        level.solids.push(Rect::new(20.0, 120.0, 80.0, 150.0));
+        assert_eq!(level.surface_height(50.0), Some(150.0));
+        assert_eq!(level.surface_height(90.0), Some(0.0));
     }
 
     #[test]

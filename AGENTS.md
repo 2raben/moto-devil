@@ -3,8 +3,8 @@
 A Rust 2024 game built with Bevy 0.20 and Rapier (`bevy_rapier2d`). Moto Devil is a
 stunt-bike game whose levels lie to you, as shaped in the
 [Moto Devil pitch](docs/pitches/moto-devil/pitch--moto-devil.md): pick a name, ride a
-bike with gas, brake, tilt, jump, and turn around through two levels with traps, and
-leave a gravestone where you crashed farthest. Progress is saved per player. Use the
+bike with gas, brake, tilt, jump, and turn around through levels with traps grouped
+into countries, and leave a gravestone where you crashed farthest. Progress is saved per player. Use the
 versions in `Cargo.toml` and the dependencies pinned by `Cargo.lock`.
 
 ## Start here
@@ -15,16 +15,19 @@ Consult the [architectural decision records (ADRs)](docs/architecture/decisions/
 for significant choices and their rationale.
 
 - `src/main.rs`: application composition and window configuration.
-- `src/simulation.rs`, `physics.rs`, `flow.rs`, `level.rs`, `levels.rs`, `course.rs`,
-  `bike.rs`, `traps.rs`, `run.rs`, `progress.rs`: the headless simulation (plugin and
-  fixed-step ordering around Rapier, poses, screens and level flow, level data and
-  the built-in levels, spawning a course, the bike and its controls, traps and
-  loops, the run rules, and players with their progress and save format).
-- `src/input.rs`, `save.rs`, `visuals.rs`, `camera.rs`, `hud.rs`, `menu.rs`: device
-  input, the progress file, drawing and render interpolation, the camera, on-screen
-  text, and the player selection screen.
-- `src/tests.rs`: headless simulation tests of the bike, traps, run rules, the flow,
-  and scripted rides through both levels.
+- `src/simulation.rs`, `physics.rs`, `flow.rs`, `level.rs`, `levels/`, `course.rs`,
+  `bike.rs`, `traps.rs`, `effects.rs`, `run.rs`, `progress.rs`: the headless
+  simulation (plugin and fixed-step ordering around Rapier, poses, screens and level
+  flow, level data and the built-in levels by country, spawning a course, the bike
+  and its controls, traps and loops, contact effects, the run rules, and players
+  with their progress and save format).
+- `src/input.rs`, `save.rs`, `visuals.rs`, `backdrop.rs`, `camera.rs`, `hud.rs`,
+  `menu.rs`: device input, the progress file, drawing and render interpolation,
+  country themes and parallax backdrops, the camera, on-screen text, and the player
+  selection screen.
+- `src/tests.rs` and `src/tests/`: headless simulation tests of the bike, traps,
+  effects, run rules, the flow, and scripted rides through every level, plus opt-in
+  GPU captures.
 - `assets/fonts/`: the compiled-in UI font and its license.
 - `Cargo.toml` and `.cargo/config.toml`: dependencies, build profiles, and Linux
   linker settings.
