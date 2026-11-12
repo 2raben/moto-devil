@@ -3,6 +3,7 @@
 mod bike;
 mod camera;
 mod course;
+mod effects;
 mod flow;
 mod hud;
 mod input;

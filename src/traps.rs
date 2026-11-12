@@ -26,6 +26,10 @@ pub const PILLAR_RISE_SPEED: f32 = 250.0;
 pub const TNT_FUSE: f32 = 0.6;
 /// The blast is deadly for this long.
 pub const TNT_BLAST: f32 = 0.25;
+pub const RAVEN_WARNING: f32 = 0.35;
+pub const RAVEN_DIVE: f32 = 0.7;
+pub const RAVEN_EXIT: f32 = 1.0;
+pub const RAVEN_RADIUS: f32 = 22.0;
 
 /// Something deadly to touch, or `None` while it is harmless.
 #[derive(Component, Clone, Copy, Debug, Default, PartialEq)]
@@ -74,6 +78,15 @@ impl Trap {
             collider,
             collider_off: false,
         }
+    }
+
+    /// Scripted movers disappear when they have left their encounter.
+    pub fn departed(&self) -> bool {
+        self.fired.is_some_and(|t| match self.def.kind {
+            TrapKind::Raven { .. } => t > RAVEN_WARNING + RAVEN_DIVE + RAVEN_EXIT,
+            TrapKind::Ball { speed, travel, .. } => t * speed > travel,
+            _ => false,
+        })
     }
 
     /// For TNT: whether it has exploded (the crate is gone).
@@ -246,6 +259,53 @@ pub fn update_traps(
                     pillar.min - down,
                     pillar.max - down,
                 )));
+            }
+            TrapKind::RisingPillar { pillar, rise } => {
+                let lift = t.map_or(0.0, |t| pillar_drop(t, rise));
+                pose.translation.y = lift;
+                let up = Vec2::Y * lift;
+                hazard.0 = (lift > 0.0).then_some(HazardShape::Rect(Rect::from_corners(
+                    pillar.min + up,
+                    pillar.max + up,
+                )));
+            }
+            TrapKind::Raven { from, strike } => {
+                let age = (t.unwrap_or(0.0) - RAVEN_WARNING).max(0.0);
+                let position = if age <= RAVEN_DIVE {
+                    from.lerp(strike, age / RAVEN_DIVE)
+                } else {
+                    strike.lerp(
+                        strike + Vec2::new(-300.0, 400.0),
+                        ((age - RAVEN_DIVE) / RAVEN_EXIT).min(1.0),
+                    )
+                };
+                pose.translation = position - from;
+                hazard.0 = (!trap.departed()).then_some(HazardShape::Circle {
+                    center: position,
+                    radius: RAVEN_RADIUS,
+                });
+            }
+            TrapKind::Ball {
+                start,
+                radius,
+                speed,
+                bounce_height,
+                ..
+            } => {
+                let age = t.unwrap_or(0.0);
+                let bounce = if bounce_height > 0.0 {
+                    let up_time = (2.0 * bounce_height / GRAVITY).sqrt();
+                    let phase = age.rem_euclid(2.0 * up_time);
+                    (GRAVITY * up_time * phase - 0.5 * GRAVITY * phase * phase).max(0.0)
+                } else {
+                    0.0
+                };
+                pose.translation = Vec2::new(-speed * age, bounce);
+                pose.angle = speed * age / radius;
+                hazard.0 = (!trap.departed()).then_some(HazardShape::Circle {
+                    center: start + pose.translation,
+                    radius,
+                });
             }
             TrapKind::Tnt {
                 crate_box,

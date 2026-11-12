@@ -20,6 +20,10 @@ use crate::run::Run;
 use crate::simulation::SimulationPlugin;
 use crate::traps::Trap;
 
+mod effects;
+#[cfg(target_os = "linux")]
+mod rendered;
+
 /// Bevy's default fixed timestep; each update advances exactly one step.
 const STEP: f32 = 1.0 / 64.0;
 
@@ -36,6 +40,7 @@ fn flat() -> Level {
         solids: vec![],
         loops: vec![],
         spikes: vec![],
+        effects: vec![],
         traps: vec![],
         checkpoints: vec![],
         start: Vec2::new(100.0, 0.0),

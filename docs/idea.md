@@ -11,7 +11,10 @@ one more trick. The ideas come from pen sketches in
 Pick or type your name, then ride. Arrow keys or WASD give gas, brake, and tilt; the
 space bar jumps and `E` turns the bike around. Level 1 is very simple and has a
 single trap; level 2 has a dropping slab, a loop with spikes behind it, a falling
-pillar, a spiky tower with TNT behind it, and a finish that jumps behind you. Every
+pillar, a spiky tower with TNT behind it, and a finish that jumps behind you.
+The third level, [Fallen & Flugstunden](pitches/fallen-powerups/pitch--fallen-powerups.md),
+adds cactus, mud, ravens, rising blocks, rolling/bouncing balls, trampolines and
+short jet flights. Its traps combine, including a trampoline into a cactus. Every
 player who rode a level leaves a gravestone where they crashed farthest, or at the
 finish once they made it. Progress is saved on this computer. The
 [Moto Devil pitch](pitches/moto-devil/pitch--moto-devil.md) describes the details.

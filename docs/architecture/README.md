@@ -9,7 +9,8 @@ it. [AGENTS.md](../../AGENTS.md) is the agent working brief;
 
 The project is one Rust binary crate implementing the
 [Moto Devil pitch](../pitches/moto-devil/pitch--moto-devil.md): a stunt-bike game
-with a player selection, two levels with traps, saved progress, and gravestones.
+with a player selection, three levels with traps, saved progress, and gravestones.
+The third level implements the [Fallen & Power-ups pitch](../pitches/fallen-powerups/pitch--fallen-powerups.md).
 [Cargo.toml](../../Cargo.toml) uses Rust edition 2024, Bevy 0.20 with default
 features disabled and the `2d`, `audio`, and `ui` feature sets, and `bevy_rapier2d`
 0.37 with only `dim2` ([ADR 0004](decisions/0004-simulate-the-bike-with-rapier.md)).
@@ -38,13 +39,15 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
   the systems that pick a player, load levels, and move between them.
 - [level.rs](../../src/level.rs) and [levels.rs](../../src/levels.rs): the `Level`
   data type (ground profile, solids, loops, spikes, traps, checkpoints, start,
-  finish, bounds, fall line) and the two built-in levels.
+  finish, bounds, fall line, contact effects) and the three built-in levels.
 - [course.rs](../../src/course.rs): spawns a level's colliders, traps, finish, and
   bike, all marked `LevelEntity`.
 - [bike.rs](../../src/bike.rs): `Controls`, `BikeTuning`, the bike's body and wheels,
   `drive_bike`, and `sense_ground` (contacts and flips).
 - [traps.rs](../../src/traps.rs): `Trap`, `Hazard`, `Finish`, and loop state, with
   the systems that re-arm, move, trigger, and switch them.
+- [effects.rs](../../src/effects.rs): contact definitions and `CourseEffect` /
+  `RideEffects` state for cactus, mud, trampoline, and jet pickups.
 - [run.rs](../../src/run.rs): the `Run` resource (time, deaths, flips, finish, crash
   delay, respawn point, attempt) and the rules for restart, respawn, checkpoints,
   crashes, the finish, and the clock.
@@ -69,23 +72,24 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
 ### Frame and fixed-step flow
 
 1. `PreUpdate`, after Bevy's `InputSystems`: while riding, `sample_controls` writes
-   held values and latches presses into `Controls`; `collect_menu_actions` appends
+   held values (including jet intent `jump_held`) and latches presses into `Controls`; `collect_menu_actions` appends
    menu keys and typed characters to `MenuInput`.
 2. `StateTransition`: entering `Playing` loads `CurrentLevel` (resources `Level`,
    `Run`, `Controls`, and the course entities); leaving it despawns the course.
 3. `FixedUpdate` at 64 Hz while `Playing`:
    - `GameSystems::Drive`, chained: `remember_poses`, `restart_or_respawn`,
-     `rearm_course`, `drive_bike`, `update_traps`.
+     `rearm_course`, `reset_effects`, `drive_bike`, `update_traps`.
    - Rapier's `SyncBackend`, `StepSimulation` (four substeps), and `Writeback`.
    - `GameSystems::React`, chained: `read_body_poses`, `sense_ground`,
      `trigger_traps`, `switch_loops`, `reach_checkpoint`, `detect_crash`,
-     `reach_finish`, `tick_run`.
+     `reach_finish`, `sense_effects`, `tick_run`.
 4. `Update`: `select_player` or `playing_menu` drain `MenuInput`; visuals draw newly
    spawned scenery, traps, bike, and wheels, and redraw gravestones when `Profiles`
    changes; the HUD and menu refresh.
 5. `PostUpdate`, before transform propagation: drawings follow interpolated poses,
    the bike is mirrored to its facing, the helmet turns red during a crash, TNT
-   explodes, and then the camera follows the bike.
+   shows its fuse and explosion, spent pickups and departed hazards hide, jet
+   flames show active thrust, and then the camera follows the bike.
 6. `Last`: `save_profiles` writes the progress file if `Profiles` changed.
 
 ### Bike model
@@ -122,6 +126,38 @@ that jumps elsewhere. Traps fire when the bike's body enters the trigger, behave
 same every time, and re-arm on each new attempt. A loop is two polyline halves; the
 right half is solid until the bike passes the top, then the left half, so the bike
 enters and leaves at the bottom.
+
+### Contact effects and flight
+
+[ADR 0007](decisions/0007-compose-contact-effects-and-scripted-hazards.md) records
+how effects compose. `sense_effects` checks every region against the bike after
+crash and finish checks. `drive_bike` applies the result on the next fixed step.
+
+- A cactus catches a wheel, stops all bike velocities and disables gravity until
+  a jump releases it. The release jumps even without ground contact and gives a
+  260 units/s push in the facing direction. The same cactus cannot catch it again
+  until both wheels have left the region.
+- Mud reduces acceleration and top speed to 35% while a wheel touches it. Above
+  that cap the bike brakes progressively. Normal tuning returns on leaving it.
+- A trampoline sets the launch velocity on contact from above, once per landing.
+  It can send the bike straight into a cactus; a cactus hold wins over a pending
+  launch. A trampoline does not spend jet fuel.
+- A jet pickup fills a two-second reservoir without stacking. Holding Space or
+  controller South supplies upward acceleration, capped at 420 units/s rise;
+  releasing saves the remainder. It replaces the normal jump while fuel remains.
+  A cactus escape still takes priority. The HUD shows fuel and a hold hint, plus
+  cactus/mud cues. No power-up prevents a hazard crash.
+
+`reset_effects` clears course contact/pickup state on a new attempt and bike
+state on a new attempt, crash or finish. The third level puts both pickups after
+its last checkpoint. Its three sections teach ground effects, timed hazards,
+and flight, including trampoline into cactus and jet flight past a raven.
+
+Ravens use a fixed warning, dive and exit. Balls roll or repeatedly bounce along
+flat authored paths. Their poses and circular hazards share the same trajectory;
+travel/time limits remove their danger and drawing until the next attempt. The
+rising block mirrors the falling pillar's timing. These scripted hazards do not
+push the bike or react to other geometry.
 
 ### Progress and gravestones
 
@@ -165,7 +201,15 @@ formatting, Clippy, build, test, and manual-run checks. There is no CI workflow.
   braking, jumping, flips, self-righting, the ground lean limit, turning around, head
   crashes and respawn, falling out, pop-up spikes, the finish and progress,
   checkpoints, restart, the player selection and level flow, and scripted rides that
-  finish both built-in levels, including the loop.
+  finish all three built-in levels, including the loop.
+- [tests/effects.rs](../../src/tests/effects.rs) covers contact effects, the
+  trampoline/cactus combination, jet hold/release/exhaustion and reset, overlapping
+  pickups with a lethal hazard, repeatable movers and the complete third level.
+- [tests/rendered.rs](../../src/tests/rendered.rs) provides opt-in Linux GPU
+  captures of the trampoline/cactus encounter and jet flight, using the actual
+  presentation plugins. Run separately as documented in the contribution guide.
+- The input regression test verifies held jet intent and latched jump presses
+  have distinct release semantics.
 
 These tests guard behavior, not feel. Ride the levels after any tuning change, and
 check visuals and input by hand.

@@ -13,7 +13,7 @@ use crate::flow::{self, CurrentLevel, Levels, MenuInput, Screen, Selection};
 use crate::physics::{self, GameSystems, PhysicsPlugin};
 use crate::progress::{ActivePlayer, Profiles};
 use crate::run::{self, Run};
-use crate::traps;
+use crate::{effects, traps};
 
 pub struct SimulationPlugin;
 
@@ -45,6 +45,7 @@ impl Plugin for SimulationPlugin {
                     physics::remember_poses,
                     run::restart_or_respawn,
                     traps::rearm_course,
+                    effects::reset_effects,
                     bike::drive_bike,
                     traps::update_traps,
                 )
@@ -62,6 +63,7 @@ impl Plugin for SimulationPlugin {
                     run::reach_checkpoint,
                     run::detect_crash,
                     run::reach_finish,
+                    effects::sense_effects,
                     run::tick_run,
                 )
                     .chain()

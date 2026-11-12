@@ -56,6 +56,18 @@ pub enum TrapKind {
     /// A pillar hanging from the ceiling that crashes down to `floor`, waits, and
     /// rises again.
     FallingPillar { pillar: Rect, floor: f32 },
+    /// A block below the ground that rises, waits, and retracts.
+    RisingPillar { pillar: Rect, rise: f32 },
+    /// A fixed dive followed by a climb out of the course.
+    Raven { from: Vec2, strike: Vec2 },
+    /// A scripted rolling/bouncing ball; travel bounds its lifetime.
+    Ball {
+        start: Vec2,
+        radius: f32,
+        speed: f32,
+        bounce_height: f32,
+        travel: f32,
+    },
     /// A TNT crate that explodes after a short fuse.
     Tnt { crate_box: Rect, blast_radius: f32 },
     /// The finish flag jumps to `to`, usually behind the bike.
@@ -92,6 +104,7 @@ pub struct Level {
     pub spikes: Vec<Spikes>,
     pub traps: Vec<TrapDef>,
     pub checkpoints: Vec<Checkpoint>,
+    pub effects: Vec<crate::effects::EffectDef>,
     /// The ground point below the middle of the bike at the start.
     pub start: Vec2,
     /// Touching this zone finishes the level (unless a trap moves it).
@@ -221,6 +234,7 @@ mod tests {
             spikes: vec![],
             traps: vec![],
             checkpoints: vec![],
+            effects: vec![],
             start: Vec2::new(50.0, 0.0),
             finish: Rect::new(280.0, 50.0, 290.0, 100.0),
             bounds: Rect::new(0.0, -100.0, 300.0, 300.0),

@@ -46,3 +46,4 @@ What this pitch explicitly does not include.
 | Pitch | Status |
 | --- | --- |
 | [Moto Devil: Bike, Spieler, Grabsteine und zwei Levels](moto-devil/pitch--moto-devil.md) | implemented |
+| [Fallen & Power-ups: Hindernisse, Trampolin und Jets](fallen-powerups/pitch--fallen-powerups.md) | implemented |

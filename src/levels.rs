@@ -10,7 +10,7 @@ use crate::level::{Checkpoint, Level, Loop, Profile, Spikes, TrapDef, TrapKind};
 
 /// All levels in the order they are played.
 pub fn all() -> Vec<Level> {
-    vec![level_one(), level_two()]
+    vec![level_one(), level_two(), flight_school()]
 }
 
 /// Very simple: ride, a small hill, a small ramp over a ditch, and one trap.
@@ -33,6 +33,7 @@ pub fn level_one() -> Level {
         solids: vec![],
         loops: vec![],
         spikes: vec![],
+        effects: vec![],
         traps: vec![TrapDef {
             kind: TrapKind::PopUpSpikes {
                 spikes: Spikes {
@@ -79,6 +80,7 @@ pub fn level_two() -> Level {
             center: Vec2::new(1330.0, 200.0),
             radius: 160.0,
         }],
+        effects: vec![],
         spikes: vec![
             Spikes {
                 left: 730.0,
@@ -141,6 +143,151 @@ pub fn level_two() -> Level {
         start: Vec2::new(100.0, 0.0),
         finish: Rect::new(3310.0, 0.0, 3350.0, 220.0),
         bounds: Rect::new(-100.0, -220.0, 3450.0, 600.0),
+        fall_y: -100.0,
+    }
+}
+
+/// Each section introduces its parts before combining them. All required
+/// pickups sit after the section's checkpoint, including the final refill.
+pub fn flight_school() -> Level {
+    use crate::effects::{EffectDef, EffectKind};
+    let effect = |left, right, height, kind| EffectDef {
+        zone: Rect::new(left, 0.0, right, height),
+        kind,
+    };
+    let trigger = |left, right| Rect::new(left, 0.0, right, 500.0);
+    let mut ground = Profile::start(-100.0, 400.0).to(-100.0, 0.0);
+    for (left, right) in [
+        (1400.0, 1600.0),
+        (2900.0, 3120.0),
+        (8500.0, 8750.0),
+        (9800.0, 10100.0),
+        (12000.0, 13000.0),
+        (13900.0, 14900.0),
+    ] {
+        ground = ground
+            .to(left, 0.0)
+            .to(left, -300.0)
+            .to(right, -300.0)
+            .to(right, 0.0);
+    }
+    Level {
+        id: "fallen-flugstunden",
+        name: "Fallen & Flugstunden",
+        ground: ground.to(15400.0, 0.0).to(15400.0, 400.0).build(),
+        solids: vec![],
+        loops: vec![],
+        spikes: vec![],
+        effects: vec![
+            effect(440.0, 480.0, 70.0, EffectKind::Cactus),
+            effect(750.0, 980.0, 8.0, EffectKind::Mud),
+            effect(2400.0, 2600.0, 8.0, EffectKind::Mud),
+            effect(
+                9600.0,
+                9680.0,
+                8.0,
+                EffectKind::Trampoline {
+                    velocity: Vec2::new(560.0, 700.0),
+                },
+            ),
+            effect(
+                10700.0,
+                10780.0,
+                8.0,
+                EffectKind::Trampoline {
+                    velocity: Vec2::new(420.0, 620.0),
+                },
+            ),
+            effect(11140.0, 11220.0, 100.0, EffectKind::Cactus),
+            effect(11700.0, 11750.0, 75.0, EffectKind::Jet),
+            effect(13400.0, 13450.0, 75.0, EffectKind::Jet),
+        ],
+        traps: vec![
+            TrapDef {
+                kind: TrapKind::PopUpSpikes {
+                    spikes: Spikes {
+                        left: 2100.0,
+                        base: 0.0,
+                        count: 4,
+                    },
+                },
+                trigger: trigger(1980.0, 2200.0),
+            },
+            TrapDef {
+                kind: TrapKind::Raven {
+                    from: Vec2::new(3960.0, 280.0),
+                    strike: Vec2::new(3900.0, 45.0),
+                },
+                trigger: trigger(3600.0, 3740.0),
+            },
+            TrapDef {
+                kind: TrapKind::FallingPillar {
+                    pillar: Rect::new(4550.0, 260.0, 4610.0, 460.0),
+                    floor: 0.0,
+                },
+                trigger: trigger(4200.0, 4330.0),
+            },
+            TrapDef {
+                kind: TrapKind::RisingPillar {
+                    pillar: Rect::new(5200.0, -210.0, 5260.0, -10.0),
+                    rise: 210.0,
+                },
+                trigger: trigger(4850.0, 4980.0),
+            },
+            TrapDef {
+                kind: TrapKind::Tnt {
+                    crate_box: Rect::new(5800.0, 0.0, 5856.0, 56.0),
+                    blast_radius: 120.0,
+                },
+                trigger: trigger(5350.0, 5490.0),
+            },
+            TrapDef {
+                kind: TrapKind::Ball {
+                    start: Vec2::new(6600.0, 32.0),
+                    radius: 32.0,
+                    speed: 230.0,
+                    bounce_height: 0.0,
+                    travel: 900.0,
+                },
+                trigger: trigger(6100.0, 6200.0),
+            },
+            TrapDef {
+                kind: TrapKind::Ball {
+                    start: Vec2::new(7700.0, 32.0),
+                    radius: 32.0,
+                    speed: 230.0,
+                    bounce_height: 200.0,
+                    travel: 950.0,
+                },
+                trigger: trigger(7100.0, 7200.0),
+            },
+            TrapDef {
+                kind: TrapKind::DropSlab {
+                    slab: Rect::new(8500.0, -20.0, 8750.0, 0.0),
+                },
+                trigger: trigger(8440.0, 8560.0),
+            },
+            TrapDef {
+                kind: TrapKind::Raven {
+                    from: Vec2::new(14100.0, 270.0),
+                    strike: Vec2::new(14000.0, 60.0),
+                },
+                trigger: trigger(13500.0, 13600.0),
+            },
+        ],
+        checkpoints: vec![
+            Checkpoint {
+                zone: trigger(3400.0, 3460.0),
+                respawn: Vec2::new(3500.0, 0.0),
+            },
+            Checkpoint {
+                zone: trigger(9000.0, 9060.0),
+                respawn: Vec2::new(9100.0, 0.0),
+            },
+        ],
+        start: Vec2::new(100.0, 0.0),
+        finish: Rect::new(15100.0, 0.0, 15150.0, 220.0),
+        bounds: Rect::new(-100.0, -350.0, 15400.0, 850.0),
         fall_y: -100.0,
     }
 }

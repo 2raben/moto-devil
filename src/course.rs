@@ -98,6 +98,13 @@ pub fn spawn_course(commands: &mut Commands, level: &Level, tuning: &BikeTuning)
         };
         commands.spawn((Name::new("Trap"), LevelEntity, Trap::new(*def, collider)));
     }
+    for def in &level.effects {
+        commands.spawn((
+            Name::new("Course effect"),
+            LevelEntity,
+            crate::effects::CourseEffect::new(*def),
+        ));
+    }
     let finish = Pose::at(level.finish.center());
     commands.spawn((
         Name::new("Finish"),
