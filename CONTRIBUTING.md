@@ -120,9 +120,12 @@ process). Inside `nix-shell`, use:
 ```sh
 TMPDIR=/tmp cargo test --locked tests::rendered::capture_trampoline_cactus -- --ignored --exact
 TMPDIR=/tmp cargo test --locked tests::rendered::capture_jet -- --ignored --exact
+MOTO_SHOT=schweiz-alpweg,1350,235,0 TMPDIR=/tmp cargo test --locked tests::rendered::capture_country -- --ignored --exact
 ```
 
-Inspect `/tmp/moto-devil-trampoline-cactus.png` and `/tmp/moto-devil-jet.png`.
+Inspect `/tmp/moto-devil-trampoline-cactus.png`, `/tmp/moto-devil-jet.png`, and
+`/tmp/moto-devil-<level id>-<start x>.png`. `MOTO_SHOT` names the level, the start
+x, the frame to capture, and a constant throttle.
 These are capture smoke tests, not pixel baselines or a physical controller test.
 
 For documentation-only changes, verify relative links and claims against source,

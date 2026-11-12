@@ -14,9 +14,13 @@ single trap; level 2 has a dropping slab, a loop with spikes behind it, a fallin
 pillar, a spiky tower with TNT behind it, and a finish that jumps behind you.
 The third level, [Fallen & Flugstunden](pitches/fallen-powerups/pitch--fallen-powerups.md),
 adds cactus, mud, ravens, rising blocks, rolling/bouncing balls, trampolines and
-short jet flights. Its traps combine, including a trampoline into a cactus. Every
-player who rode a level leaves a gravestone where they crashed farthest, or at the
-finish once they made it. Progress is saved on this computer. The
+short jet flights. Its traps combine, including a trampoline into a cactus. After
+these three training levels, [five countries](pitches/laender/pitch--laender.md)
+follow with three levels each: Ägypten (quicksand), Australien (kangaroos), USA
+(tumbleweeds and saguaros), Paris (over the rooftops), and Schweiz (avalanches),
+each with its own sky, landscape, and backdrop, and each level trolling the rider
+from start to finish. Every player who rode a level leaves a gravestone where they
+crashed farthest, or at the finish once they made it. Progress is saved on this computer. The
 [Moto Devil pitch](pitches/moto-devil/pitch--moto-devil.md) describes the details.
 
 ## Principles

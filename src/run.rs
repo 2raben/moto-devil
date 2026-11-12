@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
 use crate::bike::{self, Bike, BikeState, BikeTuning, BodyParts, Controls, Wheel};
+use crate::effects::RideEffects;
 use crate::level::Level;
 use crate::physics::{BIKE, Pose, TrackedBody, WORLD};
 use crate::progress::{ActivePlayer, Profiles};
@@ -105,7 +106,7 @@ pub fn reach_checkpoint(level: Res<Level>, mut run: ResMut<Run>, bikes: Query<&P
 }
 
 /// Detects a crash: the head touches level geometry, any part touches a hazard,
-/// or the bike falls out. Moves the player's gravestone forward if this is the
+/// the bike sinks completely into quicksand, or it falls out. Moves the player's gravestone forward if this is the
 /// farthest crash in this level.
 #[allow(clippy::too_many_arguments)]
 pub fn detect_crash(
@@ -115,7 +116,7 @@ pub fn detect_crash(
     active: Res<ActivePlayer>,
     mut profiles: ResMut<Profiles>,
     mut run: ResMut<Run>,
-    bikes: Query<(&Bike, &BikeState, &Pose)>,
+    bikes: Query<(&Bike, &BikeState, &Pose, &RideEffects)>,
     wheels: Query<&Pose, With<Wheel>>,
     hazards: Query<&Hazard>,
 ) {
@@ -125,7 +126,7 @@ pub fn detect_crash(
     let Ok(context) = rapier.single() else {
         return;
     };
-    for (bike, state, body) in &bikes {
+    for (bike, state, body, ride) in &bikes {
         let (Ok(left), Ok(right)) = (wheels.get(bike.left_wheel), wheels.get(bike.right_wheel))
         else {
             continue;
@@ -156,7 +157,7 @@ pub fn detect_crash(
                 .any(|&(center, radius)| shape.touches(center, radius))
         });
         let fell_out = body.translation.y < level.fall_y;
-        if !(head_hit || hazard_hit || fell_out) {
+        if !(head_hit || hazard_hit || fell_out || ride.buried()) {
             continue;
         }
         run.crash = Some(tuning.crash_delay);

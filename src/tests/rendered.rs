@@ -122,3 +122,90 @@ fn capture_trampoline_cactus() {
 fn capture_jet() {
     capture_scene(true);
 }
+
+#[derive(Resource)]
+struct CountryShot {
+    frames: usize,
+    at: usize,
+    throttle: f32,
+    path: std::path::PathBuf,
+    requested: bool,
+    completed: Arc<AtomicBool>,
+}
+
+/// Captures a country level: `MOTO_SHOT=<level id>,<start x>,<frames>,<throttle>`.
+#[test]
+#[ignore = "requires a Linux display and GPU; writes a screenshot into the temp directory"]
+fn capture_country() {
+    let spec = std::env::var("MOTO_SHOT").unwrap_or_else(|_| "aegypten-duenen,100,60,0".into());
+    let parts: Vec<&str> = spec.split(',').collect();
+    let mut level = crate::levels::all()
+        .into_iter()
+        .find(|level| level.id == parts[0])
+        .expect("a level id");
+    let x: f32 = parts[1].parse().unwrap();
+    level.start = Vec2::new(x, level.ground_height(x).unwrap());
+    let path = std::env::temp_dir().join(format!("moto-devil-{}-{}.png", parts[0], parts[1]));
+    let completed = Arc::new(AtomicBool::new(false));
+    let mut app = App::new();
+    app.add_plugins(
+        DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    resolution: (1280, 720).into(),
+                    visible: false,
+                    focused: false,
+                    ..default()
+                }),
+                ..default()
+            })
+            .set(WinitPlugin {
+                run_on_any_thread: true,
+            }),
+    )
+    .add_plugins((
+        SimulationPlugin,
+        crate::visuals::VisualsPlugin,
+        crate::backdrop::BackdropPlugin,
+        crate::camera::CameraPlugin,
+        crate::hud::HudPlugin,
+    ))
+    .insert_resource(Levels(vec![level]))
+    .insert_state(Screen::Playing)
+    .insert_resource(WinitSettings::continuous())
+    .insert_resource(TimeUpdateStrategy::FixedTimesteps(1))
+    .insert_resource(CountryShot {
+        frames: 0,
+        at: parts[2].parse().unwrap(),
+        throttle: parts[3].parse().unwrap(),
+        path,
+        requested: false,
+        completed: completed.clone(),
+    })
+    .add_systems(Update, shoot_country);
+    assert_eq!(app.run(), AppExit::Success);
+    assert!(completed.load(Ordering::SeqCst));
+}
+
+fn shoot_country(
+    mut commands: Commands,
+    mut shot: ResMut<CountryShot>,
+    mut controls: ResMut<Controls>,
+) {
+    shot.frames += 1;
+    controls.throttle = shot.throttle;
+    if shot.frames >= shot.at && !shot.requested {
+        shot.requested = true;
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(shot.path.clone()))
+            .observe(
+                |_: On<ScreenshotCaptured>,
+                 shot: Res<CountryShot>,
+                 mut exit: MessageWriter<AppExit>| {
+                    shot.completed.store(true, Ordering::SeqCst);
+                    exit.write(AppExit::Success);
+                },
+            );
+    }
+}

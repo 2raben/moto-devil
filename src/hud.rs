@@ -11,6 +11,9 @@ use crate::progress::{ActivePlayer, Profiles};
 use crate::run::Run;
 use crate::visuals::palette;
 
+/// The country and level are announced this long at the start of a level.
+const INTRO_SECONDS: f32 = 2.0;
+
 const FONT: &[u8] = include_bytes!("../assets/fonts/DejaVuSans-Bold.ttf");
 
 #[derive(Component)]
@@ -186,6 +189,9 @@ fn show_effects(
         if ride.muddy {
             messages.push("Matsch: neuer Anlauf nötig".to_string());
         }
+        if ride.sand_surface.is_some() {
+            messages.push("Treibsand! Nicht anhalten – springen!".to_string());
+        }
         if ride.jet_left > 0.0 {
             messages.push(format!(
                 "Jet {} s · Leertaste / Süd halten zum Fliegen",
@@ -237,6 +243,10 @@ fn show_run(
         .and_then(|player| profiles.players.get(player))
         .map_or("", |player| player.name.as_str());
     let level_name = level.as_ref().map_or("", |level| level.name);
+    let place = levels.place(current.0);
+    let where_text = place.map_or(String::new(), |(country, number, count)| {
+        format!("{} {number}/{count} · ", country.name())
+    });
     let stats = format!(
         "Zeit {} s   Tode {}   Flips {}",
         seconds(run.elapsed),
@@ -244,7 +254,7 @@ fn show_run(
         run.flips
     );
     for mut text in &mut progress {
-        let summary = format!("{name} · {level_name}   {stats}");
+        let summary = format!("{name} · {where_text}{level_name}   {stats}");
         if text.0 != summary {
             text.0 = summary;
         }
@@ -260,6 +270,10 @@ fn show_run(
         })
     } else if run.checkpoint_cue.is_some() {
         Some("Checkpoint!".to_string())
+    } else if run.elapsed < INTRO_SECONDS && run.deaths == 0 && run.attempt == 0 {
+        place.map(|(country, number, count)| {
+            format!("{}\n{number}/{count} · {level_name}", country.name())
+        })
     } else {
         None
     };
@@ -279,12 +293,21 @@ fn show_run(
 
     for (mut text, mut visibility) in &mut finish {
         if run.finished {
-            let next = if current.0 + 1 < levels.0.len() {
-                "Enter: nächstes Level"
+            let (title, next) = if let Some(country) = levels.next_country(current.0) {
+                let done = place.map_or("", |(done, ..)| done.name());
+                (
+                    format!("{done} geschafft!"),
+                    format!("Enter: weiter nach {}", country.name()),
+                )
+            } else if current.0 + 1 < levels.0.len() {
+                ("Ziel!".to_string(), "Enter: nächstes Level".to_string())
             } else {
-                "Enter: zur Spielerauswahl"
+                (
+                    "Alle Länder geschafft!".to_string(),
+                    "Enter: zur Spielerauswahl".to_string(),
+                )
             };
-            let summary = format!("Ziel!\n{stats}\n{next}   R: nochmal");
+            let summary = format!("{title}\n{stats}\n{next}   R: nochmal");
             if text.0 != summary {
                 text.0 = summary;
             }

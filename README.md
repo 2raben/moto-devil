@@ -49,6 +49,14 @@ rising blocks, rolling and bouncing balls, trampolines, and short jet flights.
 Traps can combine: one trampoline throws you into a cactus. Jump to escape, and
 release the jet button to save fuel. Checkpoints reset traps and restore pickups.
 
+After the training ground the game travels through five countries with three
+levels each: Ägypten, Australien, USA, Paris (over the rooftops of the skyline),
+and Schweiz. Each country has its own sky, landscape, and backdrop, and every level
+keeps lying to you: blocks shoot out of the ground or fall out of the empty sky,
+hatches give way, kangaroos hop at you, and the finish runs away. Egypt has
+quicksand (do not stop, jump out), Switzerland has avalanches (outrun them, or
+wait under a gallery roof).
+
 Progress is saved in `moto-devil/progress.txt` in your data directory
 (`~/.local/share` on Linux). Edit or delete that file to rename or remove players.
 

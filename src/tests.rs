@@ -20,6 +20,7 @@ use crate::run::Run;
 use crate::simulation::SimulationPlugin;
 use crate::traps::Trap;
 
+mod countries;
 mod effects;
 #[cfg(target_os = "linux")]
 mod rendered;
@@ -32,6 +33,7 @@ fn flat() -> Level {
     Level {
         id: "flat",
         name: "Flat",
+        country: crate::level::Country::Training,
         ground: Profile::start(-100.0, 400.0)
             .to(-100.0, 0.0)
             .to(4000.0, 0.0)

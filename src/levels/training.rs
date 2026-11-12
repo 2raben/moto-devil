@@ -1,23 +1,18 @@
-//! The built-in levels, in play order. See the pitch sketches `level-1` and
-//! `level-trolls` in `docs/pitches/moto-devil/`.
-//!
-//! Positions are play-test values: change them in the game, then run the tests
-//! that drive a scripted bike through each level.
+//! The training ground: the first three levels, where the shared traps are
+//! learned. See the pitch sketches `level-1` and `level-trolls` in
+//! `docs/pitches/moto-devil/` and the flight school in
+//! `docs/pitches/fallen-powerups/`.
 
 use bevy::prelude::*;
 
-use crate::level::{Checkpoint, Level, Loop, Profile, Spikes, TrapDef, TrapKind};
-
-/// All levels in the order they are played.
-pub fn all() -> Vec<Level> {
-    vec![level_one(), level_two(), flight_school()]
-}
+use crate::level::{Checkpoint, Country, Level, Loop, Profile, Spikes, TrapDef, TrapKind};
 
 /// Very simple: ride, a small hill, a small ramp over a ditch, and one trap.
 pub fn level_one() -> Level {
     Level {
         id: "level-1",
         name: "Level 1",
+        country: Country::Training,
         ground: Profile::start(-100.0, 400.0)
             .to(-100.0, 0.0)
             .to(360.0, 0.0)
@@ -58,6 +53,7 @@ pub fn level_two() -> Level {
     Level {
         id: "level-2",
         name: "Level 2",
+        country: Country::Training,
         ground: Profile::start(-100.0, 400.0)
             .to(-100.0, 0.0)
             .to(560.0, 0.0)
@@ -174,6 +170,7 @@ pub fn flight_school() -> Level {
     Level {
         id: "fallen-flugstunden",
         name: "Fallen & Flugstunden",
+        country: Country::Training,
         ground: ground.to(15400.0, 0.0).to(15400.0, 400.0).build(),
         solids: vec![],
         loops: vec![],
@@ -289,30 +286,5 @@ pub fn flight_school() -> Level {
         finish: Rect::new(15100.0, 0.0, 15150.0, 220.0),
         bounds: Rect::new(-100.0, -350.0, 15400.0, 850.0),
         fall_y: -100.0,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn built_in_levels_are_valid_and_unique() {
-        let levels = all();
-        for level in &levels {
-            assert_eq!(level.validate(), Ok(()), "{}", level.id);
-        }
-        for (i, a) in levels.iter().enumerate() {
-            for b in &levels[i + 1..] {
-                assert_ne!(a.id, b.id);
-            }
-        }
-    }
-
-    #[test]
-    fn level_one_has_a_single_trap_and_no_checkpoint() {
-        let level = level_one();
-        assert_eq!(level.traps.len(), 1);
-        assert!(level.checkpoints.is_empty());
     }
 }

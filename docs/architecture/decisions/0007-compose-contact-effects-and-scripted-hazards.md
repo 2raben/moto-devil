@@ -2,6 +2,7 @@
 tags: [adr]
 status: accepted
 date: 2026-11-12
+amended-by: [0008-group-levels-into-countries-with-presentation-themes.md]
 sources:
   - src/effects.rs
   - src/bike.rs
@@ -11,6 +12,11 @@ sources:
 ---
 
 # 0007 — Compose contact effects and scripted hazards in the fixed step
+
+> Amended by [ADR 0008](0008-group-levels-into-countries-with-presentation-themes.md):
+> quicksand joins the contact effects, and the avalanche is a scripted hazard
+> that follows the course surface, including gallery roofs. Ravens and balls
+> still do not follow terrain.
 
 ## Context
 

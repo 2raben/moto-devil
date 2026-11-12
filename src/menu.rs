@@ -96,10 +96,13 @@ fn draw_rows(
         commands.entity(list).despawn_related::<Children>();
         for (index, player) in profiles.players.iter().enumerate() {
             let done = profiles.levels_done(index, &ids);
+            let country = levels
+                .place(profiles.first_unfinished(index, &ids))
+                .map_or("", |(country, ..)| country.name());
             let progress = match done {
-                0 => "noch kein Level geschafft".to_string(),
-                n if n == ids.len() => "alle Level geschafft ✓".to_string(),
-                n => format!("{n} von {} Leveln geschafft", ids.len()),
+                0 => format!("{country} · noch kein Level geschafft"),
+                n if n == ids.len() => "alle Länder geschafft ✓".to_string(),
+                n => format!("{country} · {n} von {} Leveln geschafft", ids.len()),
             };
             let selected = selection.row == index;
             let marker = if selected { "▶ " } else { "" };
