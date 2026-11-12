@@ -7,8 +7,9 @@ documentation corrections do not need one. See
 
 Save each pitch as `docs/pitches/<topic>/pitch--<slug>.md`, and keep breadboards,
 fat-marker sketches (for example Excalidraw files), and reference images beside
-it. The [starter platformer pitch](starter-platformer/pitch--starter-platformer.md)
-is a worked example.
+it. Pitches are written in German; use the headings Problem, Lösung, Sicherheit,
+Rabbit Holes, and No-Gos for the sections below. The
+[Moto Devil pitch](moto-devil/pitch--moto-devil.md) is a worked example.
 
 ## Template
 
@@ -44,4 +45,4 @@ What this pitch explicitly does not include.
 
 | Pitch | Status |
 | --- | --- |
-| [Starter platformer](starter-platformer/pitch--starter-platformer.md) | implemented |
+| [Moto Devil: Bike, Spieler, Grabsteine und zwei Levels](moto-devil/pitch--moto-devil.md) | proposed |

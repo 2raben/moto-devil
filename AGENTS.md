@@ -1,8 +1,7 @@
 # Working in this Bevy template
 
-A Rust 2024 game built with Bevy 0.20. The current implementation is the starter
-platformer from the [starter platformer pitch](docs/pitches/starter-platformer/pitch--starter-platformer.md):
-one level from a text map, a player who runs and jumps with hand-written kinematics,
+A Rust 2024 game built with Bevy 0.20. The current implementation is still the starter
+platformer: one level from a text map, a player who runs and jumps with hand-written kinematics,
 coins, a goal flag, a following camera, and a HUD. Use the versions in `Cargo.toml`
 and the dependencies pinned by `Cargo.lock`.
 
@@ -26,7 +25,9 @@ for significant choices and their rationale.
 - `.mise/config.toml` and `.mise/tasks/`: the pinned toolchain and the `build`,
   `test`, `run`, `check`, and `fmt` tasks.
 - [docs/idea.md](docs/idea.md): game direction and longer-term possibilities.
-- [docs/pitches/](docs/pitches/README.md): bounded feature proposals and companion sketches.
+- [docs/pitches/](docs/pitches/README.md): bounded feature proposals and companion sketches,
+  written in German. The [Moto Devil pitch](docs/pitches/moto-devil/pitch--moto-devil.md)
+  shapes the bike game that replaces the starter platformer.
 
 ## Skills
 

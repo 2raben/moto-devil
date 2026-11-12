@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -40 1580 1450" width="1580" height="1450" font-family="Virgil, 'Comic Sans MS', 'Segoe Print', cursive">
+<rect x="-40" y="-40" width="1580.0" height="1450" fill="#ffffff"/>
+<defs>
+<marker id="a7048e8" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#7048e8" stroke-width="1.6"/></marker>
+<marker id="a2f9e44" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#2f9e44" stroke-width="1.6"/></marker>
+<marker id="a1e1e1e" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1e1e1e" stroke-width="1.6"/></marker>
+<marker id="ae03131" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#e03131" stroke-width="1.6"/></marker>
+<marker id="ae8590c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#e8590c" stroke-width="1.6"/></marker>
+<marker id="ac2255c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#c2255c" stroke-width="1.6"/></marker>
+<marker id="a1971c2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#1971c2" stroke-width="1.6"/></marker>
+<marker id="a868e96" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10" fill="none" stroke="#868e96" stroke-width="1.6"/></marker>
+</defs>
+<text x="0" y="34.199999999999996" font-size="36" fill="#1e1e1e" text-anchor="start">Moto Devil: Steuerung</text>
+<text x="0" y="67.0" font-size="20" fill="#868e96" text-anchor="start">Pfeiltasten oder WASD, dazu Leertaste und E. Schnell gelernt, mit Hilfen gegen Frust.</text>
+<rect x="120" y="110" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#b2f2bb" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="155.0" y="156.6" font-size="28" fill="#1e1e1e" text-anchor="middle">W</text>
+<rect x="40" y="190" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#d0bfff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="75.0" y="236.6" font-size="28" fill="#1e1e1e" text-anchor="middle">A</text>
+<rect x="120" y="190" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#ffd8a8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="155.0" y="236.6" font-size="28" fill="#1e1e1e" text-anchor="middle">S</text>
+<rect x="200" y="190" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#d0bfff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="235.0" y="236.6" font-size="28" fill="#1e1e1e" text-anchor="middle">D</text>
+<rect x="480" y="110" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#b2f2bb" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="515.0" y="156.6" font-size="28" fill="#1e1e1e" text-anchor="middle">↑</text>
+<rect x="400" y="190" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#d0bfff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="435.0" y="236.6" font-size="28" fill="#1e1e1e" text-anchor="middle">←</text>
+<rect x="480" y="190" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#ffd8a8" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="515.0" y="236.6" font-size="28" fill="#1e1e1e" text-anchor="middle">↓</text>
+<rect x="560" y="190" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#d0bfff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="595.0" y="236.6" font-size="28" fill="#1e1e1e" text-anchor="middle">→</text>
+<rect x="200" y="110" width="70" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#fcc2d7" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="235.0" y="156.6" font-size="28" fill="#1e1e1e" text-anchor="middle">E</text>
+<text x="330.0" y="229.7" font-size="26" fill="#868e96" text-anchor="middle">oder</text>
+<rect x="40" y="280" width="630" height="70" rx="10" stroke="#1e1e1e" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="355.0" y="322.8" font-size="24" fill="#1e1e1e" text-anchor="middle">Leertaste</text>
+<text x="40" y="385.2" font-size="16" fill="#868e96" text-anchor="start">E und Leertaste mit der linken Hand, auch wer rechts die Pfeiltasten nimmt.</text>
+<text x="720" y="119.0" font-size="20" fill="#2f9e44" text-anchor="start">W / ↑</text>
+<text x="840" y="119.0" font-size="20" fill="#1e1e1e" text-anchor="start">Gas: fährt in Blickrichtung (nur mit Bodenkontakt)</text>
+<text x="720" y="159.0" font-size="20" fill="#e8590c" text-anchor="start">S / ↓</text>
+<text x="840" y="159.0" font-size="20" fill="#1e1e1e" text-anchor="start">Bremse</text>
+<text x="720" y="199.0" font-size="20" fill="#7048e8" text-anchor="start">A / ←</text>
+<text x="840" y="199.0" font-size="20" fill="#1e1e1e" text-anchor="start">kippt das Bike nach links (gegen den Uhrzeigersinn)</text>
+<text x="720" y="239.0" font-size="20" fill="#7048e8" text-anchor="start">D / →</text>
+<text x="840" y="239.0" font-size="20" fill="#1e1e1e" text-anchor="start">kippt das Bike nach rechts (im Uhrzeigersinn)</text>
+<text x="720" y="279.0" font-size="20" fill="#1971c2" text-anchor="start">Leertaste</text>
+<text x="840" y="279.0" font-size="20" fill="#1e1e1e" text-anchor="start">springen (nur vom Boden aus)</text>
+<text x="720" y="319.0" font-size="20" fill="#c2255c" text-anchor="start">E</text>
+<text x="840" y="319.0" font-size="20" fill="#1e1e1e" text-anchor="start">umdrehen: das Bike schaut in die andere Richtung</text>
+<text x="720" y="359.0" font-size="20" fill="#1e1e1e" text-anchor="start">R</text>
+<text x="840" y="359.0" font-size="20" fill="#1e1e1e" text-anchor="start">Level neu starten</text>
+<text x="720" y="399.0" font-size="20" fill="#1e1e1e" text-anchor="start">Enter</text>
+<text x="840" y="399.0" font-size="20" fill="#1e1e1e" text-anchor="start">Spieler bestätigen; nach dem Ziel: nächstes Level</text>
+<text x="720" y="439.0" font-size="20" fill="#1e1e1e" text-anchor="start">Esc</text>
+<text x="840" y="439.0" font-size="20" fill="#1e1e1e" text-anchor="start">im Level: zur Spielerauswahl; in der Spielerauswahl: beenden</text>
+<text x="720" y="499.0" font-size="20" fill="#1971c2" text-anchor="start">Hilfen, damit es nicht zu schwer ist:</text>
+<text x="720" y="529.1" font-size="18" fill="#1e1e1e" text-anchor="start">· in der Luft ohne Taste richtet sich das Bike langsam wieder gerade</text>
+<text x="720" y="551.6" font-size="18" fill="#1e1e1e" text-anchor="start">· am Boden kippt es höchstens bis etwa 45°, kein Überschlag aus Versehen</text>
+<text x="720" y="574.1" font-size="18" fill="#1e1e1e" text-anchor="start">· Sprung zählt auch kurz vor der Landung und kurz nach einer Kante</text>
+<text x="720" y="596.6" font-size="18" fill="#1e1e1e" text-anchor="start">· Crash nur, wenn der Kopf etwas trifft; Respawn in unter einer halben Sekunde</text>
+<text x="720" y="635.2" font-size="16" fill="#868e96" text-anchor="start">Controller: rechter Trigger Gas, linker Trigger Bremse, Stick / Steuerkreuz kippen,</text>
+<text x="720" y="655.2" font-size="16" fill="#868e96" text-anchor="start">Süd-Taste springen, West-Taste umdrehen, Select neu starten.</text>
+<rect x="0" y="700" width="360" height="320" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="16" y="732.9" font-size="22" fill="#2f9e44" text-anchor="start">Gas  W / ↑</text>
+<text x="180.0" y="766.15" font-size="17" fill="#868e96" text-anchor="middle">fährt in Blickrichtung</text>
+<rect x="390" y="700" width="360" height="320" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406" y="732.9" font-size="22" fill="#7048e8" text-anchor="start">Kippen  A / ←</text>
+<text x="569.995" y="766.15" font-size="17" fill="#868e96" text-anchor="middle">Wheelie, steile Hänge hoch;</text>
+<text x="569.995" y="787.4" font-size="17" fill="#868e96" text-anchor="middle">am Boden höchstens ~45°</text>
+<rect x="780" y="700" width="360" height="320" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="796" y="732.9" font-size="22" fill="#1971c2" text-anchor="start">Springen  Leertaste</text>
+<text x="960.0" y="766.15" font-size="17" fill="#868e96" text-anchor="middle">Hüpfer nach oben, nur vom Boden;</text>
+<text x="960.0" y="787.4" font-size="17" fill="#868e96" text-anchor="middle">mit einer Rampe geht es weiter</text>
+<rect x="0" y="1050" width="360" height="320" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="16" y="1082.9" font-size="22" fill="#7048e8" text-anchor="start">In der Luft: D / → halten</text>
+<text x="179.995" y="1116.15" font-size="17" fill="#868e96" text-anchor="middle">dreht sich, solange gehalten;</text>
+<text x="179.995" y="1137.4" font-size="17" fill="#868e96" text-anchor="middle">ohne Taste: langsam gerade</text>
+<rect x="390" y="1050" width="360" height="320" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="406" y="1082.9" font-size="22" fill="#c2255c" text-anchor="start">Umdrehen  E</text>
+<text x="570.005" y="1116.15" font-size="17" fill="#868e96" text-anchor="middle">Gas fährt jetzt nach links;</text>
+<text x="570.005" y="1137.4" font-size="17" fill="#868e96" text-anchor="middle">in voller Fahrt erst kurz abbremsen</text>
+<rect x="780" y="1050" width="360" height="320" rx="10" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="796" y="1082.9" font-size="22" fill="#1e1e1e" text-anchor="start">Landung</text>
+<polyline points="20,970 340,970" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="120.0" cy="954.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="184.0" cy="954.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="120.0,954.0 142.0,932.0 172.0,932.0 184.0,954.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="130.0,928.0 154.0,928.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="172.0,932.0 176.0,916.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="138.0,946.0 146.0,924.0 154.0,900.0 174.0,916.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="160.0" cy="888.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="40,920 90,920" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="40,940 90,940" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="40,960 90,960" stroke="#868e96" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="230,930 320,930" stroke="#2f9e44" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a2f9e44)"/>
+<polyline points="410,970 730,970" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="510.0" cy="954.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="566.51" cy="923.95" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="510.0,954.0 519.1,924.25 545.58,910.16 566.51,923.95" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="506.62,926.35 527.8100000000001,915.08" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="545.58,910.16 541.6,894.15" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="522.14,938.49 518.88,915.3100000000001 514.67,890.36 539.84,895.1" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="514.3299999999999" cy="876.95" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="628.33,934.9 624.4200000000001,919.4 618.3000000000001,904.63 610.11,890.91 600.01,878.51 588.23,867.72 575.0,858.74" stroke="#7048e8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a7048e8)"/>
+<polyline points="800,970 1120,970" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="830.0" cy="954.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="894.0" cy="954.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="830.0,954.0 852.0,932.0 882.0,932.0 894.0,954.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="840.0,928.0 864.0,928.0" stroke="#1e1e1e" stroke-width="4" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="882.0,932.0 886.0,916.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="848.0,946.0 856.0,924.0 864.0,900.0 884.0,916.0" stroke="#1971c2" stroke-width="3" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="870.0" cy="888.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" stroke-dasharray="8 6" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="960.0" cy="884.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1024.0" cy="884.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="960.0,884.0 982.0,862.0 1012.0,862.0 1024.0,884.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="970.0,858.0 994.0,858.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1012.0,862.0 1016.0,846.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="978.0,876.0 986.0,854.0 994.0,830.0 1014.0,846.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1000.0" cy="818.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1100,960 1100,860" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a1971c2)"/>
+<polyline points="20,1320 340,1320" stroke="#868e96" stroke-width="3" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="60.0" cy="1240.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="124.0" cy="1240.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="60.0,1240.0 82.0,1218.0 112.0,1218.0 124.0,1240.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="70.0,1214.0 94.0,1214.0" stroke="#1e1e1e" stroke-width="4" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="112.0,1218.0 116.0,1202.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="78.0,1232.0 86.0,1210.0 94.0,1186.0 114.0,1202.0" stroke="#1971c2" stroke-width="3" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="100.0" cy="1174.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" stroke-dasharray="8 6" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="190.0" cy="1190.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="211.89" cy="1250.14" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="190.0,1190.0 218.2,1203.15 228.46,1231.34 211.89,1250.14" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="217.85,1190.5 226.06,1213.05" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="228.46,1231.34 244.86,1229.6299999999999" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="203.67,1204.18 227.07999999999998,1204.17 252.37,1203.48 244.17,1227.75" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="265.7" cy="1205.01" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="135.05,1182.5 144.27,1169.82 155.92000000000002,1159.32 169.5,1151.48 184.41000000000003,1146.64 200.0,1145.0 215.60000000000002,1146.64 230.51,1151.48 244.09000000000003,1159.32 255.74,1169.82 264.95000000000005,1182.5" stroke="#7048e8" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a7048e8)"/>
+<polyline points="410,1320 730,1320" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="430.0" cy="1304.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="494.0" cy="1304.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="430.0,1304.0 452.0,1282.0 482.0,1282.0 494.0,1304.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="440.0,1278.0 464.0,1278.0" stroke="#1e1e1e" stroke-width="4" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="482.0,1282.0 486.0,1266.0" stroke="#1e1e1e" stroke-width="2" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="448.0,1296.0 456.0,1274.0 464.0,1250.0 484.0,1266.0" stroke="#1971c2" stroke-width="3" stroke-dasharray="8 6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="470.0" cy="1238.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" stroke-dasharray="8 6" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="700.0" cy="1304.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="636.0" cy="1304.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="700.0,1304.0 678.0,1282.0 648.0,1282.0 636.0,1304.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="690.0,1278.0 666.0,1278.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="648.0,1282.0 644.0,1266.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="682.0,1296.0 674.0,1274.0 666.0,1250.0 646.0,1266.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="660.0" cy="1238.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="494.52,1254.35 501.15999999999997,1240.6299999999999 510.44,1228.53 521.98,1218.57 535.29,1211.1399999999999 549.8299999999999,1206.55 565.0,1205.0 580.16,1206.55 594.7,1211.1399999999999 608.02,1218.57 619.55,1228.53 628.8299999999999,1240.6299999999999 635.47,1254.35" stroke="#c2255c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ac2255c)"/>
+<polyline points="610,1180 520,1180" stroke="#2f9e44" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#a2f9e44)"/>
+<polyline points="800,1320 1120,1320" stroke="#1e1e1e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="820.0" cy="1304.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="884.0" cy="1304.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="820.0,1304.0 842.0,1282.0 872.0,1282.0 884.0,1304.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="830.0,1278.0 854.0,1278.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="872.0,1282.0 876.0,1266.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="838.0,1296.0 846.0,1274.0 854.0,1250.0 874.0,1266.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="860.0" cy="1238.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="852.0" y="1127.1" font-size="18" fill="#2f9e44" text-anchor="middle">beide Räder</text>
+<text x="852.0" y="1149.6" font-size="18" fill="#2f9e44" text-anchor="middle">→ weiterfahren</text>
+<polyline points="840,1170 852,1185 875,1152" stroke="#2f9e44" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1080.0" cy="1244.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1016.0" cy="1244.0" rx="16.0" ry="16.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1080.0,1244.0 1058.0,1266.0 1028.0,1266.0 1016.0,1244.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1070.0,1270.0 1046.0,1270.0" stroke="#1e1e1e" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1028.0,1266.0 1024.0,1282.0" stroke="#1e1e1e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1062.0,1252.0 1054.0,1274.0 1046.0,1298.0 1026.0,1282.0" stroke="#1971c2" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="1040.0" cy="1310.0" rx="10.0" ry="10.0" stroke="#1971c2" stroke-width="2" fill="#a5d8ff" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1048.0" y="1127.1" font-size="18" fill="#e03131" text-anchor="middle">Kopf am Boden</text>
+<text x="1048.0" y="1149.6" font-size="18" fill="#e03131" text-anchor="middle">→ Crash</text>
+<polyline points="1030,1155 1065,1190" stroke="#e03131" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1065,1155 1030,1190" stroke="#e03131" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
