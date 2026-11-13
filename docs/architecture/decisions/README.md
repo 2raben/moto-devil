@@ -44,6 +44,7 @@ from. Moto Devil kept 0002 and 0003, amended 0002 with 0006, and replaced 0001 w
 | [0003 — Pin the toolchain and run project tasks with mise](0003-run-project-tasks-with-mise.md) | accepted |
 | [0004 — Simulate the bike with Rapier inside the fixed step](0004-simulate-the-bike-with-rapier.md) | accepted |
 | [0005 — Save progress in a versioned text file in the user's data directory](0005-save-progress-in-a-versioned-text-file.md) | accepted |
-| [0006 — Pass menu keys and typed text through a `MenuInput` resource](0006-pass-menu-input-through-a-menuinput-resource.md) | accepted |
+| [0006 — Pass menu keys and typed text through a `MenuInput` resource](0006-pass-menu-input-through-a-menuinput-resource.md) | accepted, amended by 0009 |
 | [0007 — Compose contact effects and scripted hazards in the fixed step](0007-compose-contact-effects-and-scripted-hazards.md) | accepted, amended by 0008 |
 | [0008 — Group levels into countries with presentation themes](0008-group-levels-into-countries-with-presentation-themes.md) | accepted |
+| [0009 — Let players rebind riding keys in the input layer and a keys file](0009-let-players-rebind-riding-keys-in-the-input-layer.md) | accepted |

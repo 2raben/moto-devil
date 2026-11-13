@@ -1,10 +1,12 @@
-//! Reads and writes [`Profiles`] in the user's data directory.
+//! Reads and writes [`Profiles`] and the [`KeyBindings`] in the user's data
+//! directory.
 //!
-//! The file is untrusted: it is size-limited and checked line by line by
-//! [`progress::decode`]. An unreadable file is moved aside as a backup and the
-//! game starts with an empty list. Writes go to a temporary file in the same
-//! directory first and then replace the old file, so a crash never leaves half a
-//! file. See ADR 0005.
+//! Each file is untrusted: it is size-limited and checked line by line by
+//! [`progress::decode`] or [`bindings::decode`]. An unreadable file is moved
+//! aside as a backup and the game starts with an empty list or the default
+//! keys. Writes go to a temporary file in the same directory first and then
+//! replace the old file, so a crash never leaves half a file. See ADR 0005 and
+//! ADR 0009.
 //!
 //! This plugin is not part of the headless simulation; tests use the pure
 //! functions and a temporary directory.
@@ -15,25 +17,37 @@ use std::path::{Path, PathBuf};
 
 use bevy::prelude::*;
 
+use crate::bindings::{self, KeyBindings, MAX_KEYS_BYTES};
 use crate::flow::Levels;
 use crate::progress::{self, KnownLevel, MAX_SAVE_BYTES, Profiles};
 
 const APP_DIR: &str = "moto-devil";
 const FILE_NAME: &str = "progress.txt";
+const KEYS_FILE_NAME: &str = "keys.txt";
 
 pub struct SavePlugin;
 
 impl Plugin for SavePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_profiles)
-            .add_systems(Last, save_profiles.run_if(resource_changed::<Profiles>));
+        app.add_systems(Startup, (load_profiles, load_keys))
+            .add_systems(
+                Last,
+                (
+                    save_profiles.run_if(resource_changed::<Profiles>),
+                    save_keys.run_if(resource_changed::<KeyBindings>),
+                ),
+            );
     }
 }
 
-/// The text most recently loaded or written, so unchanged profiles are not
-/// written again.
+/// The progress text most recently loaded or written, so unchanged profiles
+/// are not written again.
 #[derive(Resource, Default)]
 struct SavedText(String);
+
+/// The same for the key bindings.
+#[derive(Resource, Default)]
+struct SavedKeys(String);
 
 /// The per-user data directory of this platform, without any game subfolder.
 fn data_dir() -> Option<PathBuf> {
@@ -56,6 +70,11 @@ pub fn save_path() -> Option<PathBuf> {
     data_dir().map(|dir| dir.join(APP_DIR).join(FILE_NAME))
 }
 
+/// Where the key bindings live, next to the progress file.
+pub fn keys_path() -> Option<PathBuf> {
+    data_dir().map(|dir| dir.join(APP_DIR).join(KEYS_FILE_NAME))
+}
+
 fn known_levels(levels: &Levels) -> Vec<KnownLevel<'_>> {
     levels
         .0
@@ -74,34 +93,50 @@ fn known_levels(levels: &Levels) -> Vec<KnownLevel<'_>> {
 /// Reads the profiles at `path`. A missing file gives an empty list; a file that
 /// cannot be used is renamed to `<name>.broken` and also gives an empty list.
 pub fn load(path: &Path, levels: &[KnownLevel]) -> Profiles {
-    let text = match read_limited(path) {
+    load_with(path, MAX_SAVE_BYTES, |text| progress::decode(text, levels))
+}
+
+/// Reads the key bindings at `path`. A missing file gives the default keys; a
+/// file that cannot be used is renamed to `<name>.broken` and also gives them.
+pub fn load_bindings(path: &Path) -> KeyBindings {
+    load_with(path, MAX_KEYS_BYTES, bindings::decode)
+}
+
+/// Decodes the file at `path`, or gives the default if it is missing or
+/// cannot be used, moving a broken file aside.
+fn load_with<T: Default, E: std::fmt::Display>(
+    path: &Path,
+    max_bytes: usize,
+    decode: impl FnOnce(&str) -> Result<T, E>,
+) -> T {
+    let text = match read_limited(path, max_bytes) {
         Ok(Some(text)) => text,
-        Ok(None) => return Profiles::default(),
+        Ok(None) => return T::default(),
         Err(error) => {
             warn!("Could not read {}: {error}", path.display());
             back_up(path);
-            return Profiles::default();
+            return T::default();
         }
     };
-    match progress::decode(&text, levels) {
-        Ok(profiles) => profiles,
+    match decode(&text) {
+        Ok(value) => value,
         Err(error) => {
             warn!("Ignoring {}: {error}", path.display());
             back_up(path);
-            Profiles::default()
+            T::default()
         }
     }
 }
 
-/// The file's text, `None` if it does not exist, or an error if it is too
-/// large, unreadable, or not UTF-8.
-fn read_limited(path: &Path) -> io::Result<Option<String>> {
+/// The file's text, `None` if it does not exist, or an error if it is larger
+/// than `max_bytes`, unreadable, or not UTF-8.
+fn read_limited(path: &Path, max_bytes: usize) -> io::Result<Option<String>> {
     let metadata = match fs::metadata(path) {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(error),
     };
-    if !metadata.is_file() || metadata.len() > MAX_SAVE_BYTES as u64 {
+    if !metadata.is_file() || metadata.len() > max_bytes as u64 {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "not a regular file of a sensible size",
@@ -149,19 +184,37 @@ fn load_profiles(mut commands: Commands, levels: Res<Levels>) {
 }
 
 fn save_profiles(profiles: Res<Profiles>, saved: Option<ResMut<SavedText>>) {
-    let Some(mut saved) = saved else {
+    if let Some(mut saved) = saved {
+        write_if_changed(&mut saved.0, progress::encode(&profiles), save_path());
+    }
+}
+
+fn load_keys(mut commands: Commands) {
+    let Some(path) = keys_path() else {
         return;
     };
-    let text = progress::encode(&profiles);
-    if text == saved.0 {
+    let bindings = load_bindings(&path);
+    commands.insert_resource(SavedKeys(bindings::encode(&bindings)));
+    commands.insert_resource(bindings);
+}
+
+fn save_keys(bindings: Res<KeyBindings>, saved: Option<ResMut<SavedKeys>>) {
+    if let Some(mut saved) = saved {
+        write_if_changed(&mut saved.0, bindings::encode(&bindings), keys_path());
+    }
+}
+
+/// Writes `text` to `path` unless it is what was last loaded or written.
+fn write_if_changed(saved: &mut String, text: String, path: Option<PathBuf>) {
+    if text == *saved {
         return;
     }
-    let Some(path) = save_path() else {
+    let Some(path) = path else {
         return;
     };
     match write_atomic(&path, &text) {
-        Ok(()) => saved.0 = text,
-        Err(error) => warn!("Could not save progress to {}: {error}", path.display()),
+        Ok(()) => *saved = text,
+        Err(error) => warn!("Could not save {}: {error}", path.display()),
     }
 }
 
@@ -216,6 +269,23 @@ mod tests {
         fs::write(&path, "something else\n").unwrap();
         assert_eq!(load(&path, LEVELS), Profiles::default());
         assert!(dir.join("progress.txt.broken").exists());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn key_bindings_round_trip_and_fall_back_to_the_defaults() {
+        let dir = scratch("keys");
+        let path = dir.join(KEYS_FILE_NAME);
+        assert_eq!(load_bindings(&path), KeyBindings::default(), "no file");
+
+        let keys = bindings::decode("moto-devil-keys 1\nkey\tjump\tKeyK\tK\n").unwrap();
+        assert_ne!(keys, KeyBindings::default());
+        write_atomic(&path, &bindings::encode(&keys)).unwrap();
+        assert_eq!(load_bindings(&path), keys);
+
+        fs::write(&path, "garbage\n").unwrap();
+        assert_eq!(load_bindings(&path), KeyBindings::default());
+        assert!(dir.join("keys.txt.broken").exists());
         fs::remove_dir_all(dir).unwrap();
     }
 }

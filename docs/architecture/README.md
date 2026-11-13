@@ -27,7 +27,8 @@ because Bevy's built-in font has no umlauts.
 
 [src/main.rs](../../src/main.rs) composes the app from plugins in two layers
 ([ADR 0002](decisions/0002-keep-the-simulation-headless-behind-a-controls-resource.md),
-amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resource.md)).
+amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resource.md)
+and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.md)).
 
 **Simulation**, which runs without a window and is used by the tests:
 
@@ -37,9 +38,10 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
 - [physics.rs](../../src/physics.rs): Rapier in `FixedUpdate`, collision groups, the
   `GameSystems::Drive` and `GameSystems::React` sets around Rapier's `PhysicsSet`,
   and `Pose`/`PreviousPose`, which hold every simulated position and angle.
-- [flow.rs](../../src/flow.rs): the `Screen` state (`SelectPlayer`, `Playing`), the
-  `Levels` list and `CurrentLevel`, `MenuInput`/`MenuAction`, the `Selection`, and
-  the systems that pick a player, load levels, and move between them.
+- [flow.rs](../../src/flow.rs): the `Screen` state (`SelectPlayer`, `Playing`,
+  `Settings`), the `Levels` list and `CurrentLevel`, `MenuInput`/`MenuAction`, the
+  `Selection`, and the systems that pick a player, load levels, move between them,
+  and leave the key settings.
 - [level.rs](../../src/level.rs) and [levels/](../../src/levels/mod.rs): the `Level`
   data type (country, ground profile, solids, loops, spikes, traps, checkpoints,
   start, finish, bounds, fall line, contact effects), the `Country` enum, and the
@@ -61,10 +63,14 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
 **Presentation and I/O**, which need a window or a file system:
 
 - [input.rs](../../src/input.rs): keyboard and gamepad into `Controls` and
-  `MenuInput`. The only module that reads devices.
+  `MenuInput`, with riding keys from `KeyBindings`.
+- [bindings.rs](../../src/bindings.rs): the riding `Action`s, `KeyBindings`, the
+  key settings editor, and the keys file format
+  ([ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.md)).
+  With `input.rs`, the only module that reads devices.
 - [save.rs](../../src/save.rs): loads and writes the progress file
-  ([ADR 0005](decisions/0005-save-progress-in-a-versioned-text-file.md)). The only
-  module that touches files.
+  ([ADR 0005](decisions/0005-save-progress-in-a-versioned-text-file.md)) and the
+  keys file. The only module that touches files.
 - [visuals.rs](../../src/visuals.rs): the palette; ground, loop, spike, trap, flag,
   bike, wheel, and gravestone drawings in the country's colours; interpolation from
   `Pose`.
@@ -75,12 +81,15 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
 - [hud.rs](../../src/hud.rs): the progress panel, controls reminder, cues
   ("Autsch!", "Flip!", "Checkpoint!"), and finish panel; installs the font.
 - [menu.rs](../../src/menu.rs): the "Wer fährt?" screen.
+- [settings.rs](../../src/settings.rs): the "Tasten" screen.
 
 ### Frame and fixed-step flow
 
 1. `PreUpdate`, after Bevy's `InputSystems`: while riding, `sample_controls` writes
-   held values (including jet intent `jump_held`) and latches presses into `Controls`; `collect_menu_actions` appends
-   menu keys and typed characters to `MenuInput`.
+   held values of the bound keys (including jet intent `jump_held`) and latches
+   presses into `Controls`; `collect_menu_actions` appends menu keys and typed
+   characters to `MenuInput`; on the key settings `edit_bindings` edits
+   `KeyBindings` instead.
 2. `StateTransition`: entering `Playing` loads `CurrentLevel` (resources `Level`,
    `Run`, `Controls`, and the course entities); leaving it despawns the course.
 3. `FixedUpdate` at 64 Hz while `Playing`:
@@ -90,14 +99,15 @@ amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resourc
    - `GameSystems::React`, chained: `read_body_poses`, `sense_ground`,
      `trigger_traps`, `switch_loops`, `reach_checkpoint`, `detect_crash`,
      `reach_finish`, `sense_effects`, `tick_run`.
-4. `Update`: `select_player` or `playing_menu` drain `MenuInput`; visuals draw newly
+4. `Update`: `select_player`, `playing_menu`, or `settings_menu` drain `MenuInput`; visuals draw newly
    spawned scenery, traps, bike, and wheels, and redraw gravestones when `Profiles`
    changes; the HUD and menu refresh.
 5. `PostUpdate`, before transform propagation: drawings follow interpolated poses,
    the bike is mirrored to its facing, the helmet turns red during a crash, TNT
    shows its fuse and explosion, spent pickups and departed hazards hide, jet
    flames show active thrust, and then the camera follows the bike.
-6. `Last`: `save_profiles` writes the progress file if `Profiles` changed.
+6. `Last`: `save_profiles` writes the progress file if `Profiles` changed, and
+   `save_keys` the keys file if `KeyBindings` changed.
 
 ### Bike model
 
@@ -193,6 +203,19 @@ envelope, so it rolls over a gallery roof (a solid above the track) and the bike
 can wait under the roof. One from behind must be outrun, or sheltered from when it
 is too fast.
 
+### Key bindings
+
+Each riding action (gas, brake, tilt left and right, jump/jet, turn, restart) has
+two key slots; the defaults are W/A/S/D and the arrows, Space, E, and R. Tab on the
+player selection opens "Tasten": arrows choose an action and slot, Enter waits for
+the next key, Backspace/Delete clear the slot, the last row restores the defaults,
+and Escape cancels waiting or goes back. Bindings are physical keys; letter and
+punctuation keys show the character the layout typed when they were bound. A key
+does one thing only: binding it again takes it from its old action, and the view
+says so and lists actions left without a key. Escape and Enter cannot be bound.
+Gamepad controls and menu keys are fixed. The bindings are shared by all players
+on the computer and saved in `moto-devil/keys.txt`; the HUD names the bound keys.
+
 ### Progress and gravestones
 
 `Profiles` lists the players; `ActivePlayer` is the one riding. A crash farther right
@@ -210,7 +233,7 @@ resources.
 
 Follow rustfmt and nearby Rust naming and import conventions. Prefer small,
 purposeful systems with explicit data access. Make scheduling dependencies explicit
-when behavior depends on order. Read device input only in `input.rs` and pass it to
+when behavior depends on order. Read device input only in `input.rs` and `bindings.rs` and pass it to
 the simulation through `Controls` and `MenuInput`. Simulated positions live in
 `Pose`; Rapier owns physics bodies' transforms, and presentation draws separate
 entities linked with `VisualOf`. Keep pure logic, such as level geometry, name
@@ -244,11 +267,14 @@ formatting, Clippy, build, test, and manual-run checks. There is no CI workflow.
   avalanches, jumps where its plan says, and turns when the finish runs away. Each
   ride must finish without a crash and meet every trap except jumped hatches.
 - [tests/rendered.rs](../../src/tests/rendered.rs) provides opt-in Linux GPU
-  captures of the trampoline/cactus encounter, jet flight, and any country level
-  (`MOTO_SHOT=<level id>,<start x>,<frames>,<throttle>`), using the actual
-  presentation plugins. Run separately as documented in the contribution guide.
-- The input regression test verifies held jet intent and latched jump presses
-  have distinct release semantics.
+  captures of the trampoline/cactus encounter, jet flight, any country level
+  (`MOTO_SHOT=<level id>,<start x>,<frames>,<throttle>`), and the key settings,
+  using the actual presentation plugins. Run separately as documented in the contribution guide.
+- The input regression tests verify that held jet intent and latched jump
+  presses have distinct release semantics, and that rebound keys drive
+  `Controls` while their old keys do not. `bindings.rs` tests cover the defaults,
+  moving keys between actions, reserved keys, layout labels, the editor (also fed
+  with `KeyboardInput` messages), and the keys file format.
 
 These tests guard behavior, not feel. Ride the levels after any tuning change, and
 check visuals and input by hand.

@@ -106,6 +106,13 @@ Check the affected behavior manually:
   appears where they crashed farthest. Gravestones of other players show with their
   names; after quitting and restarting the game, they are still there.
 - R restarts the level; Escape returns to the player selection.
+- Tab on the player selection opens "Tasten". Rebind gas to another key (on a
+  German layout try the key that types Z, which must show "Z"), bind a key that
+  another action uses (the view says it moved), clear a slot with Backspace, and
+  check that Escape and Enter cannot be bound. Escape cancels waiting, then goes
+  back. Riding uses the new keys and not the old ones, the HUD reminder, jet hint,
+  and finish panel name them, and the keys survive a restart of the game. The last
+  row restores the defaults.
 - A controller rides with the triggers and stick, jumps with South, turns with
   West, restarts with Select, and returns with Start.
 
@@ -121,10 +128,12 @@ process). Inside `nix-shell`, use:
 TMPDIR=/tmp cargo test --locked tests::rendered::capture_trampoline_cactus -- --ignored --exact
 TMPDIR=/tmp cargo test --locked tests::rendered::capture_jet -- --ignored --exact
 MOTO_SHOT=schweiz-alpweg,1350,235,0 TMPDIR=/tmp cargo test --locked tests::rendered::capture_country -- --ignored --exact
+TMPDIR=/tmp cargo test --locked tests::rendered::capture_key_settings -- --ignored --exact
 ```
 
-Inspect `/tmp/moto-devil-trampoline-cactus.png`, `/tmp/moto-devil-jet.png`, and
-`/tmp/moto-devil-<level id>-<start x>.png`. `MOTO_SHOT` names the level, the start
+Inspect `/tmp/moto-devil-trampoline-cactus.png`, `/tmp/moto-devil-jet.png`,
+`/tmp/moto-devil-<level id>-<start x>.png`, and `/tmp/moto-devil-keys.png` (the key
+settings waiting for a second gas key, with the jump left without a key). `MOTO_SHOT` names the level, the start
 x, the frame to capture, and a constant throttle.
 These are capture smoke tests, not pixel baselines or a physical controller test.
 

@@ -209,3 +209,58 @@ fn shoot_country(
             );
     }
 }
+
+/// Captures the "Tasten" screen while it waits for a new gas key, with the
+/// jump left without a key.
+#[test]
+#[ignore = "requires a Linux display and GPU; writes a screenshot into the temp directory"]
+fn capture_key_settings() {
+    use crate::bindings::{Action, BindingEditor, KeyBindings};
+
+    let mut keys = KeyBindings::default();
+    keys.clear(Action::Jump, 0);
+    let completed = Arc::new(AtomicBool::new(false));
+    let mut app = App::new();
+    app.add_plugins(
+        DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    resolution: (960, 540).into(),
+                    visible: false,
+                    focused: false,
+                    ..default()
+                }),
+                ..default()
+            })
+            .set(WinitPlugin {
+                run_on_any_thread: true,
+            }),
+    )
+    .add_plugins((
+        SimulationPlugin,
+        crate::camera::CameraPlugin,
+        crate::hud::HudPlugin,
+        crate::settings::SettingsViewPlugin,
+    ))
+    .insert_resource(Levels(vec![flat()]))
+    .insert_resource(keys)
+    .insert_resource(BindingEditor {
+        row: 0,
+        slot: 1,
+        waiting: true,
+        notice: None,
+    })
+    .insert_state(Screen::Settings)
+    .insert_resource(WinitSettings::continuous())
+    .insert_resource(CountryShot {
+        frames: 0,
+        at: 20,
+        throttle: 0.0,
+        path: std::env::temp_dir().join("moto-devil-keys.png"),
+        requested: false,
+        completed: completed.clone(),
+    })
+    .add_systems(Update, shoot_country);
+    assert_eq!(app.run(), AppExit::Success);
+    assert!(completed.load(Ordering::SeqCst));
+}

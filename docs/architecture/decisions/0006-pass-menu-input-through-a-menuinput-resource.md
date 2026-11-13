@@ -3,6 +3,7 @@ tags: [adr]
 status: accepted
 date: 2026-11-12
 amends: [0002-keep-the-simulation-headless-behind-a-controls-resource.md]
+amended-by: [0009-let-players-rebind-riding-keys-in-the-input-layer.md]
 sources:
   - src/input.rs
   - src/flow.rs
@@ -11,6 +12,12 @@ sources:
 ---
 
 # 0006 — Pass menu keys and typed text through a `MenuInput` resource
+
+> Amended by [ADR 0009](0009-let-players-rebind-riding-keys-in-the-input-layer.md):
+> riding keys come from rebindable `KeyBindings`, and `src/bindings.rs` joins
+> `src/input.rs` in the input layer. It reads the keyboard itself on the new key
+> settings screen, which Tab (`MenuAction::Settings`) opens from the player
+> selection. The tell below now matches both files.
 
 ## Context
 

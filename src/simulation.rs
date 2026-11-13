@@ -37,6 +37,7 @@ impl Plugin for SimulationPlugin {
                 (
                     flow::select_player.run_if(in_state(Screen::SelectPlayer)),
                     flow::playing_menu.run_if(in_state(Screen::Playing)),
+                    flow::settings_menu.run_if(in_state(Screen::Settings)),
                 ),
             )
             .add_systems(
