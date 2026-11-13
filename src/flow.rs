@@ -20,6 +20,9 @@ pub enum Screen {
     SelectPlayer,
     /// Riding a level.
     Playing,
+    /// "Tasten": choosing the riding keys. The editor lives in the input layer
+    /// (`bindings.rs`); the flow only leaves this screen again.
+    Settings,
 }
 
 /// All levels in play order.
@@ -108,6 +111,8 @@ pub enum MenuAction {
     Type(char),
     /// Backspace while typing a name.
     Erase,
+    /// Tab on the player selection: open the key settings.
+    Settings,
 }
 
 /// Menu keys since the flow last looked, oldest first.
@@ -168,10 +173,25 @@ pub fn select_player(
                 next.set(Screen::Playing);
                 return;
             }
+            MenuAction::Settings => {
+                next.set(Screen::Settings);
+                return;
+            }
             MenuAction::Back => {
                 exit.write(AppExit::Success);
                 return;
             }
+        }
+    }
+}
+
+/// Handles menu keys on the key settings: Escape goes back to the player
+/// selection. The settings themselves are edited by the input layer.
+pub fn settings_menu(mut input: ResMut<MenuInput>, mut next: ResMut<NextState<Screen>>) {
+    for action in std::mem::take(&mut input.0) {
+        if action == MenuAction::Back {
+            next.set(Screen::SelectPlayer);
+            return;
         }
     }
 }

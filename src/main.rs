@@ -2,6 +2,7 @@
 
 mod backdrop;
 mod bike;
+mod bindings;
 mod camera;
 mod course;
 mod effects;
@@ -15,6 +16,7 @@ mod physics;
 mod progress;
 mod run;
 mod save;
+mod settings;
 mod simulation;
 mod traps;
 mod visuals;
@@ -43,6 +45,7 @@ fn main() -> AppExit {
             camera::CameraPlugin,
             hud::HudPlugin,
             menu::MenuPlugin,
+            settings::SettingsViewPlugin,
         ))
         .run()
 }

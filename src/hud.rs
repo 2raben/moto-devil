@@ -4,6 +4,7 @@
 
 use bevy::prelude::*;
 
+use crate::bindings::{Action, KeyBindings};
 use crate::effects::{JET_SECONDS, RideEffects};
 use crate::flow::{CurrentLevel, Levels, Screen};
 use crate::level::Level;
@@ -46,7 +47,9 @@ impl Plugin for HudPlugin {
         {
             warn!("Could not replace the default font");
         }
-        app.add_systems(OnEnter(Screen::Playing), spawn_hud)
+        // The input layer owns the bindings; captures run the HUD without it.
+        app.init_resource::<KeyBindings>()
+            .add_systems(OnEnter(Screen::Playing), spawn_hud)
             .add_systems(
                 Update,
                 (show_run, show_effects).run_if(in_state(Screen::Playing)),
@@ -80,7 +83,21 @@ fn panel(node: Node) -> impl Bundle {
     )
 }
 
-fn spawn_hud(mut commands: Commands) {
+/// The controls reminder with the player's keys.
+fn controls_reminder(keys: &KeyBindings) -> String {
+    format!(
+        "{} Gas   {} Bremse   {} {} kippen   {} springen   {} umdrehen   {} neu   Esc Spielerauswahl",
+        keys.label(Action::Gas),
+        keys.label(Action::Brake),
+        keys.label(Action::TiltLeft),
+        keys.label(Action::TiltRight),
+        keys.label(Action::Jump),
+        keys.label(Action::Turn),
+        keys.label(Action::Restart),
+    )
+}
+
+fn spawn_hud(mut commands: Commands, keys: Res<KeyBindings>) {
     commands
         .spawn((
             Name::new("Bike effects"),
@@ -136,10 +153,7 @@ fn spawn_hud(mut commands: Commands) {
             left: Val::Px(10.0),
             ..default()
         }),
-        text(
-            "W/↑ Gas   S/↓ Bremse   A/← D/→ kippen   Leertaste springen   E umdrehen   R neu   Esc Spielerauswahl",
-            14.0,
-        ),
+        text(controls_reminder(&keys), 14.0),
     ));
     commands.spawn((
         Name::new("Cue"),
@@ -174,6 +188,7 @@ fn spawn_hud(mut commands: Commands) {
 }
 
 fn show_effects(
+    keys: Res<KeyBindings>,
     bikes: Query<&RideEffects>,
     mut panels: Query<&mut Visibility, With<EffectPanel>>,
     mut labels: Query<&mut Text, With<EffectText>>,
@@ -194,8 +209,9 @@ fn show_effects(
         }
         if ride.jet_left > 0.0 {
             messages.push(format!(
-                "Jet {} s · Leertaste / Süd halten zum Fliegen",
-                seconds(ride.jet_left)
+                "Jet {} s · {} / Süd halten zum Fliegen",
+                seconds(ride.jet_left),
+                keys.label(Action::Jump)
             ));
         }
     }
@@ -228,6 +244,7 @@ fn seconds(value: f32) -> String {
 
 #[allow(clippy::type_complexity, clippy::too_many_arguments)]
 fn show_run(
+    keys: Res<KeyBindings>,
     run: Res<Run>,
     level: Option<Res<Level>>,
     levels: Res<Levels>,
@@ -307,7 +324,8 @@ fn show_run(
                     "Enter: zur Spielerauswahl".to_string(),
                 )
             };
-            let summary = format!("{title}\n{stats}\n{next}   R: nochmal");
+            let again = keys.label(Action::Restart);
+            let summary = format!("{title}\n{stats}\n{next}   {again}: nochmal");
             if text.0 != summary {
                 text.0 = summary;
             }
@@ -325,5 +343,13 @@ mod tests {
     #[test]
     fn seconds_use_a_decimal_comma() {
         assert_eq!(seconds(12.34), "12,3");
+    }
+
+    #[test]
+    fn the_reminder_names_the_default_keys() {
+        assert_eq!(
+            controls_reminder(&KeyBindings::default()),
+            "W/↑ Gas   S/↓ Bremse   A/← D/→ kippen   Leertaste springen   E umdrehen   R neu   Esc Spielerauswahl"
+        );
     }
 }

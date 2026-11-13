@@ -56,7 +56,7 @@ fn spawn_menu(mut commands: Commands) {
                 },
             ),
             colored_text(
-                "↑/↓ wählen   Enter fahren   Buchstaben tippen = neuer Name   Esc beenden",
+                "↑/↓ wählen   Enter fahren   Buchstaben tippen = neuer Name   Tab Tasten   Esc beenden",
                 15.0,
                 palette::MUTED,
             ),

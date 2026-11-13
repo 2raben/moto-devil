@@ -505,6 +505,29 @@ fn players_choose_a_name_and_continue_where_they_stopped() {
 }
 
 #[test]
+fn tab_opens_the_key_settings_and_escape_comes_back() {
+    let mut sim = Sim::new(vec![flat()]);
+    sim.type_name("Mia");
+    sim.menu(MenuAction::Settings);
+    sim.steps(1);
+    assert_eq!(sim.screen(), Screen::Settings);
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    assert_eq!(
+        sim.screen(),
+        Screen::Settings,
+        "Enter edits, it does not leave"
+    );
+    sim.menu(MenuAction::Back);
+    sim.steps(1);
+    assert_eq!(sim.screen(), Screen::SelectPlayer);
+    assert!(
+        sim.app.world().resource::<Messages<AppExit>>().is_empty(),
+        "Escape on the settings does not quit"
+    );
+}
+
+#[test]
 fn escape_on_the_selection_quits() {
     let mut sim = Sim::new(vec![flat()]);
     sim.app

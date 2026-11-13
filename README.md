@@ -39,6 +39,12 @@ Your gravestone marks the farthest place you crashed, next to everyone else's.
 | Next level after the finish | Enter | South |
 | Back to the player selection | Escape | Start |
 
+Press Tab on the player selection to choose your own riding keys: pick an action
+and a slot with the arrow keys, press Enter, then the new key. Backspace clears a
+slot, the last row restores the keys above, and Escape goes back. Each action can
+have two keys; the bindings are shared by everyone on this computer, and the HUD
+shows them while riding. Escape, Enter, and the controller cannot be rebound.
+
 Riding keys are physical positions, so WASD and E stay in place on any keyboard
 layout. In the air the bike slowly rights itself when no tilt key is held, and on
 the ground it never leans far enough to flip over. Escape on the player selection
@@ -59,6 +65,7 @@ wait under a gallery roof).
 
 Progress is saved in `moto-devil/progress.txt` in your data directory
 (`~/.local/share` on Linux). Edit or delete that file to rename or remove players.
+Key bindings are saved next to it in `keys.txt`; delete it to restore the defaults.
 
 ## Requirements
 
