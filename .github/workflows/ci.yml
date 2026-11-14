@@ -1,0 +1,42 @@
+# Checks every pull request and every push to main: formatting, Clippy, the
+# native build and tests, and the browser build. See CONTRIBUTING.md.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Debug info is not needed in CI and makes the build directory much larger.
+  CARGO_PROFILE_DEV_DEBUG: "0"
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The linker from .cargo/config.toml and the headers Bevy builds against.
+      - name: Install native libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            clang lld pkg-config libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: Format, Clippy, build, and tests
+        run: mise run check
+      - name: Clippy for the browser
+        run: cargo clippy --locked --target wasm32-unknown-unknown -- -D warnings
+      - name: Browser build
+        run: mise run web:build
