@@ -89,14 +89,24 @@ mise run run
 Check the affected behavior manually:
 
 - The player selection shows "Wer fährt?"; typing a name (umlauts included) and
-  Enter starts riding; ↑/↓ picks an existing player; Escape quits (natively only).
+  Enter opens the level map; ↑/↓ picks an existing player; Escape quits (natively
+  only).
+- The level map shows each country with its sky, land, landmark, and banner
+  tally, and a medallion per level: finished green with a tick, open orange,
+  locked grey with a padlock on a footpath. ←/→ (and ↑/↓) ride the bike between
+  open levels and skip locked ones, the camera follows, the bottom bar names the
+  level and its state, Enter rides it, and Escape returns to the player selection.
+  A new player has only level 1 open.
 - W/↑ accelerates smoothly, S/↓ brakes, A/D and ←/→ tilt; holding a tilt in the air
   flips the bike, and releasing it lets the bike right itself. On the ground the bike
   does not flip over backwards.
 - Space jumps only from the ground; E turns the bike around and gas then drives the
   other way.
 - Level 1: the small ramp clears the ditch at speed; the spikes before the finish
-  pop up; the finish shows the result, and Enter goes on to level 2.
+  pop up; the finish shows the result and "Freigeschaltet: Level 2"; Enter returns
+  to the map, which announces the new level, grows its medallion, and rides the bike
+  over to it; Enter there rides level 2. Finishing level 1 again unlocks nothing new
+  and shows no announcement.
 - Level 2: the slab drops, the loop can be ridden at full gas, the spikes after the
   loop pop up, the checkpoint moves the respawn point, the pillar falls and rises,
   TNT explodes, and the finish jumps behind the bike.
@@ -108,7 +118,7 @@ Check the affected behavior manually:
 - A crash shows "Autsch!", the bike respawns quickly, and the player's gravestone
   appears where they crashed farthest. Gravestones of other players show with their
   names; after quitting and restarting the game, they are still there.
-- R restarts the level; Escape returns to the player selection.
+- R restarts the level; Escape returns to the level map.
 - Tab on the player selection opens "Tasten". Rebind gas to another key (on a
   German layout try the key that types Z, which must show "Z"), bind a key that
   another action uses (the view says it moved), clear a slot with Backspace, and
@@ -117,7 +127,8 @@ Check the affected behavior manually:
   and finish panel name them, and the keys survive a restart of the game. The last
   row restores the defaults.
 - A controller rides with the triggers and stick, jumps with South, turns with
-  West, restarts with Select, and returns with Start.
+  West, restarts with Select, and returns with Start. On the level map the D-pad
+  chooses, South rides, and East or Start goes back.
 
 Record what was checked; if no graphical environment is available, report that
 limitation.
@@ -155,12 +166,16 @@ TMPDIR=/tmp cargo test --locked tests::rendered::capture_trampoline_cactus -- --
 TMPDIR=/tmp cargo test --locked tests::rendered::capture_jet -- --ignored --exact
 MOTO_SHOT=schweiz-alpweg,1350,235,0 TMPDIR=/tmp cargo test --locked tests::rendered::capture_country -- --ignored --exact
 TMPDIR=/tmp cargo test --locked tests::rendered::capture_key_settings -- --ignored --exact
+MOTO_MAP=7,150 TMPDIR=/tmp cargo test --locked tests::rendered::capture_level_map -- --ignored --exact
 ```
 
 Inspect `/tmp/moto-devil-trampoline-cactus.png`, `/tmp/moto-devil-jet.png`,
-`/tmp/moto-devil-<level id>-<start x>.png`, and `/tmp/moto-devil-keys.png` (the key
-settings waiting for a second gas key, with the jump left without a key). `MOTO_SHOT` names the level, the start
-x, the frame to capture, and a constant throttle.
+`/tmp/moto-devil-<level id>-<start x>.png`, `/tmp/moto-devil-keys.png` (the key
+settings waiting for a second gas key, with the jump left without a key), and
+`/tmp/moto-devil-map-<levels done>.png`. `MOTO_SHOT` names the level, the start
+x, the frame to capture, and a constant throttle. `MOTO_MAP` names how many levels
+the player has finished, in order, and the frame to capture; the map arrives from
+the last finished level, which unlocked the next.
 These are capture smoke tests, not pixel baselines or a physical controller test.
 
 For documentation-only changes, verify relative links and claims against source,

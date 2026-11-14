@@ -48,7 +48,12 @@ fn spawn_camera(mut commands: Commands) {
 /// Where the camera should centre for a bike at `bike`, keeping a view of
 /// `half_view` inside the level where it fits and centring it where it does not.
 pub fn camera_target(bounds: Rect, bike: Vec2, half_view: Vec2) -> Vec2 {
-    let wanted = bike + LOOK_AHEAD;
+    keep_inside(bounds, bike + LOOK_AHEAD, half_view)
+}
+
+/// The camera centre nearest to `wanted` that keeps a view of `half_view`
+/// inside `bounds`, centred on an axis where the view is larger.
+pub fn keep_inside(bounds: Rect, wanted: Vec2, half_view: Vec2) -> Vec2 {
     let axis = |wanted: f32, min: f32, max: f32, half: f32| {
         if max - min <= 2.0 * half {
             0.5 * (min + max)

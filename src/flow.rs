@@ -1,4 +1,5 @@
-//! Game flow: choosing a player, loading levels, and moving between them.
+//! Game flow: choosing a player, picking a level on the level map, loading
+//! levels, and unlocking the next one.
 //!
 //! Menu keys arrive as [`MenuAction`]s in [`MenuInput`], written by the input
 //! layer, so the flow runs headless in tests like the rest of the simulation
@@ -18,6 +19,9 @@ pub enum Screen {
     /// "Wer fährt?": pick or type a name.
     #[default]
     SelectPlayer,
+    /// The level map: the player's progress through the countries, and the
+    /// unlocked level to ride next.
+    LevelMap,
     /// Riding a level.
     Playing,
     /// "Tasten": choosing the riding keys. The editor lives in the input layer
@@ -103,9 +107,14 @@ pub struct CurrentLevel(pub usize);
 pub enum MenuAction {
     Up,
     Down,
-    /// Enter: choose the player, or go on after the finish.
+    /// The previous level on the level map.
+    Left,
+    /// The next level on the level map.
+    Right,
+    /// Enter: choose the player or the level, or go on after the finish.
     Confirm,
-    /// Escape: back to the player selection, or quit from there (see [`CAN_QUIT`]).
+    /// Escape: back one screen (riding, level map, player selection), or quit
+    /// from the player selection (see [`CAN_QUIT`]).
     Back,
     /// A typed character for a new name.
     Type(char),
@@ -131,6 +140,15 @@ pub struct Selection {
     pub typed: String,
 }
 
+/// How the level map was reached from a level: the level that was ridden,
+/// where the marker starts, and the level its first finish unlocked, which the
+/// map announces. Both are `None` when the map comes from the player selection.
+#[derive(Resource, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct MapArrival {
+    pub from: Option<usize>,
+    pub unlocked: Option<usize>,
+}
+
 /// Handles menu keys on the player selection screen.
 #[allow(clippy::too_many_arguments)]
 pub fn select_player(
@@ -139,6 +157,7 @@ pub fn select_player(
     mut profiles: ResMut<Profiles>,
     mut active: ResMut<ActivePlayer>,
     mut current: ResMut<CurrentLevel>,
+    mut arrival: ResMut<MapArrival>,
     levels: Res<Levels>,
     mut next: ResMut<NextState<Screen>>,
     mut exit: MessageWriter<AppExit>,
@@ -172,15 +191,17 @@ pub fn select_player(
                 };
                 active.0 = Some(player);
                 current.0 = profiles.first_unfinished(player, &levels.ids());
+                *arrival = MapArrival::default();
                 selection.typed.clear();
                 selection.row = player;
-                next.set(Screen::Playing);
+                next.set(Screen::LevelMap);
                 return;
             }
             MenuAction::Settings => {
                 next.set(Screen::Settings);
                 return;
             }
+            MenuAction::Left | MenuAction::Right => {}
             MenuAction::Back => {
                 if CAN_QUIT {
                     exit.write(AppExit::Success);
@@ -202,25 +223,38 @@ pub fn settings_menu(mut input: ResMut<MenuInput>, mut next: ResMut<NextState<Sc
     }
 }
 
-/// Handles menu keys while riding: Enter after the finish goes to the next
-/// level, Escape goes back to the player selection.
-pub fn playing_menu(
-    mut commands: Commands,
+/// Handles menu keys on the level map: left and right (or up and down) move
+/// between the unlocked levels, skipping locked ones, Enter rides the chosen
+/// level, and Escape goes back to the player selection. [`CurrentLevel`] is the
+/// chosen level.
+pub fn level_map(
     mut input: ResMut<MenuInput>,
-    run: Res<Run>,
+    profiles: Res<Profiles>,
+    active: Res<ActivePlayer>,
     levels: Res<Levels>,
     mut current: ResMut<CurrentLevel>,
     mut next: ResMut<NextState<Screen>>,
 ) {
+    let unlocked = profiles.unlocked(active.0, &levels.ids());
+    if !unlocked.get(current.0).copied().unwrap_or(false) {
+        current.0 = 0;
+    }
     for action in std::mem::take(&mut input.0) {
         match action {
-            MenuAction::Confirm if run.finished => {
-                if current.0 + 1 < levels.0.len() {
-                    current.0 += 1;
-                    commands.run_system_cached(load_level);
-                } else {
-                    next.set(Screen::SelectPlayer);
+            MenuAction::Left | MenuAction::Up => {
+                if let Some(index) = unlocked[..current.0].iter().rposition(|open| *open) {
+                    current.0 = index;
                 }
+            }
+            MenuAction::Right | MenuAction::Down => {
+                let after = current.0 + 1;
+                let rest = unlocked.get(after..).unwrap_or_default();
+                if let Some(offset) = rest.iter().position(|open| *open) {
+                    current.0 = after + offset;
+                }
+            }
+            MenuAction::Confirm if !unlocked.is_empty() => {
+                next.set(Screen::Playing);
                 return;
             }
             MenuAction::Back => {
@@ -229,6 +263,37 @@ pub fn playing_menu(
             }
             _ => {}
         }
+    }
+}
+
+/// Handles menu keys while riding: Enter after the finish and Escape go back
+/// to the level map. After a finish the map moves on to the next level and
+/// announces it if this finish unlocked it.
+pub fn playing_menu(
+    mut input: ResMut<MenuInput>,
+    run: Res<Run>,
+    levels: Res<Levels>,
+    mut current: ResMut<CurrentLevel>,
+    mut arrival: ResMut<MapArrival>,
+    mut next: ResMut<NextState<Screen>>,
+) {
+    for action in std::mem::take(&mut input.0) {
+        let finished = match action {
+            MenuAction::Confirm if run.finished => true,
+            MenuAction::Back => false,
+            _ => continue,
+        };
+        let ridden = current.0;
+        let following = (ridden + 1 < levels.0.len()).then_some(ridden + 1);
+        *arrival = MapArrival {
+            from: Some(ridden),
+            unlocked: following.filter(|_| finished && run.unlocked_next),
+        };
+        if finished && let Some(following) = following {
+            current.0 = following;
+        }
+        next.set(Screen::LevelMap);
+        return;
     }
 }
 

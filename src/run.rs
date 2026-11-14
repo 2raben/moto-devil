@@ -22,6 +22,9 @@ pub struct Run {
     pub deaths: u32,
     pub flips: u32,
     pub finished: bool,
+    /// The player finished this level for the first time since it was loaded,
+    /// which unlocked the next one. A restart keeps it.
+    pub unlocked_next: bool,
     /// Seconds left until the respawn, after a crash.
     pub crash: Option<f32>,
     /// Where the bike comes back after a crash.
@@ -63,6 +66,7 @@ pub fn restart_or_respawn(
         let attempt = run.attempt + 1;
         *run = Run {
             attempt,
+            unlocked_next: run.unlocked_next,
             ..Run::new(level.start)
         };
         level.start
@@ -196,7 +200,7 @@ pub fn reach_finish(
         if reached {
             run.finished = true;
             if let Some(player) = active.0 {
-                profiles.record_finish(player, level.id);
+                run.unlocked_next |= profiles.record_finish(player, level.id);
             }
             return;
         }

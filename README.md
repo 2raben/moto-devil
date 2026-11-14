@@ -24,8 +24,12 @@ run the game.
 
 ## How to play
 
-Type your name on the first screen (or pick it with ↑/↓) and press Enter. You start
-at the first level you have not finished yet. Ride to the flag; when the level lies
+Type your name on the first screen (or pick it with ↑/↓) and press Enter. The level
+map shows your way through the countries: finished levels have a tick, open ones
+glow orange, and locked ones wait behind a padlock. Choose an open level with ←/→
+and press Enter; the map starts at the first level you have not finished yet.
+Finishing a level unlocks the next one, and you can ride any finished level again.
+Ride to the flag; when the level lies
 to you, you crash, respawn at the last checkpoint at once, and know one more trick.
 Your gravestone marks the farthest place you crashed, next to everyone else's.
 
@@ -38,8 +42,11 @@ Your gravestone marks the farthest place you crashed, next to everyone else's.
 | Jet thrust (while fuel remains) | Hold Space | Hold South |
 | Turn around | E | West (X / Square) |
 | Restart the level | R | Select |
-| Next level after the finish | Enter | South |
-| Back to the player selection | Escape | Start |
+| Choose a level on the map | Left / Right | D-pad |
+| Ride the chosen level | Enter | South |
+| Back to the map after the finish | Enter | South |
+| Back to the map while riding | Escape | Start |
+| Back to the player selection from the map | Escape | East or Start |
 
 Press Tab on the player selection to choose your own riding keys: pick an action
 and a slot with the arrow keys, press Enter, then the new key. Backspace clears a

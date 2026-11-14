@@ -22,10 +22,10 @@ for significant choices and their rationale.
   and its controls, traps and loops, contact effects, the run rules, and players
   with their progress and save format).
 - `src/input.rs`, `bindings.rs`, `save.rs`, `visuals.rs`, `backdrop.rs`, `camera.rs`,
-  `hud.rs`, `menu.rs`, `settings.rs`: device input, rebindable riding keys, the
-  saving progress and keys, drawing and render interpolation, country themes and
-  parallax backdrops, the camera, on-screen text, the player selection, and the key
-  settings screen.
+  `hud.rs`, `menu.rs`, `map.rs`, `settings.rs`: device input, rebindable riding
+  keys, saving progress and keys, drawing and render interpolation, country
+  themes and parallax backdrops, the camera, on-screen text, the player selection,
+  the level map, and the key settings screen.
 - `src/save/`: the save stores, files natively and local storage in the browser.
 - `web/index.html`: the page of the browser build; `.github/workflows/`: CI and
   the GitHub Pages publication.
