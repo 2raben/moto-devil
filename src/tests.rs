@@ -12,7 +12,7 @@ use bevy::state::app::StatesPlugin;
 use bevy::time::TimeUpdateStrategy;
 
 use crate::bike::{Bike, BikeState, BikeTuning, Controls};
-use crate::flow::{CurrentLevel, Levels, MenuAction, MenuInput, Screen};
+use crate::flow::{CurrentLevel, Levels, MapArrival, MenuAction, MenuInput, Screen};
 use crate::level::{Level, Profile, Spikes, TrapDef, TrapKind};
 use crate::physics::Pose;
 use crate::progress::{ActivePlayer, Grave, Profiles};
@@ -94,14 +94,25 @@ impl Sim {
         sim
     }
 
-    /// Starts riding `level` as the player "Test".
+    /// Starts riding `level` as the player "Test", through the level map.
     fn riding(level: Level) -> Self {
         let mut sim = Self::new(vec![level]);
         sim.type_name("Test");
         sim.menu(MenuAction::Confirm);
         sim.steps(1);
+        assert_eq!(sim.screen(), Screen::LevelMap);
+        sim.menu(MenuAction::Confirm);
+        sim.steps(1);
         assert_eq!(sim.screen(), Screen::Playing);
         sim
+    }
+
+    fn current(&self) -> usize {
+        self.app.world().resource::<CurrentLevel>().0
+    }
+
+    fn arrival(&self) -> MapArrival {
+        *self.app.world().resource::<MapArrival>()
     }
 
     fn steps(&mut self, count: usize) {
@@ -461,47 +472,141 @@ fn restart_resets_the_bike_and_the_run() {
     assert!((sim.body().translation.x - 100.0).abs() < 5.0);
 }
 
+/// A short flat level with its own id.
+fn short(id: &'static str) -> Level {
+    let mut level = flat();
+    level.id = id;
+    level.finish = Rect::new(300.0, 0.0, 340.0, 200.0);
+    level
+}
+
 #[test]
 fn players_choose_a_name_and_continue_where_they_stopped() {
-    let short = |id: &'static str| {
-        let mut level = flat();
-        level.id = id;
-        level.finish = Rect::new(300.0, 0.0, 340.0, 200.0);
-        level
-    };
     let mut sim = Sim::new(vec![short("one"), short("two")]);
     assert_eq!(sim.screen(), Screen::SelectPlayer);
     sim.type_name("Mia");
     sim.menu(MenuAction::Confirm);
     sim.steps(1);
+    assert_eq!(sim.screen(), Screen::LevelMap);
+    assert_eq!(sim.current(), 0);
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
     assert_eq!(sim.screen(), Screen::Playing);
     assert_eq!(sim.level_id(), "one");
 
+    // The finish goes back to the map, which moves on to the unlocked level.
     sim.gas(1.0);
     assert!(sim.until(3.0, |sim| sim.run().finished));
+    assert!(sim.run().unlocked_next);
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    assert_eq!(sim.screen(), Screen::LevelMap);
+    assert_eq!(sim.current(), 1);
+    assert_eq!(
+        sim.arrival(),
+        MapArrival {
+            from: Some(0),
+            unlocked: Some(1)
+        }
+    );
     sim.menu(MenuAction::Confirm);
     sim.steps(2);
     assert_eq!(sim.level_id(), "two");
     assert!(!sim.run().finished);
 
-    // Escape goes back; choosing Mia again continues at level two.
+    // Escape goes back to the map, then to the player selection; choosing
+    // Mia again continues at level two.
+    sim.menu(MenuAction::Back);
+    sim.steps(1);
+    assert_eq!(sim.screen(), Screen::LevelMap);
+    assert_eq!(sim.arrival().unlocked, None, "nothing new");
     sim.menu(MenuAction::Back);
     sim.steps(1);
     assert_eq!(sim.screen(), Screen::SelectPlayer);
     sim.type_name("mia");
     sim.menu(MenuAction::Confirm);
     sim.steps(1);
-    assert_eq!(sim.level_id(), "two");
+    assert_eq!(sim.screen(), Screen::LevelMap);
+    assert_eq!(sim.current(), 1);
+    assert_eq!(sim.arrival(), MapArrival::default());
     assert_eq!(sim.profiles().players.len(), 1, "the same player");
     assert_eq!(sim.app.world().resource::<ActivePlayer>().0, Some(0));
 
-    // After the last level the selection comes back.
+    // After the last level the map comes back and stays there.
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
     sim.gas(1.0);
     assert!(sim.until(3.0, |sim| sim.run().finished));
     sim.menu(MenuAction::Confirm);
     sim.steps(1);
-    assert_eq!(sim.screen(), Screen::SelectPlayer);
-    assert_eq!(sim.app.world().resource::<CurrentLevel>().0, 1);
+    assert_eq!(sim.screen(), Screen::LevelMap);
+    assert_eq!(sim.current(), 1);
+    assert_eq!(sim.arrival().unlocked, None, "no level after the last");
+}
+
+#[test]
+fn the_map_only_lets_players_choose_unlocked_levels() {
+    let mut sim = Sim::new(vec![short("one"), short("two"), short("three")]);
+    sim.type_name("Mia");
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    assert_eq!(sim.screen(), Screen::LevelMap);
+    for action in [MenuAction::Right, MenuAction::Down, MenuAction::Right] {
+        sim.menu(action);
+    }
+    assert_eq!(sim.current(), 0, "the other levels are locked");
+
+    // Finishing level one opens level two, but not three.
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    sim.gas(1.0);
+    assert!(sim.until(3.0, |sim| sim.run().finished));
+    sim.gas(0.0);
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    assert_eq!(sim.current(), 1);
+    sim.menu(MenuAction::Right);
+    assert_eq!(sim.current(), 1, "level three is still locked");
+    sim.menu(MenuAction::Left);
+    assert_eq!(sim.current(), 0, "finished levels can be ridden again");
+    sim.menu(MenuAction::Up);
+    assert_eq!(sim.current(), 0);
+    sim.menu(MenuAction::Right);
+    assert_eq!(sim.current(), 1);
+
+    // Riding a finished level again unlocks nothing new.
+    sim.menu(MenuAction::Left);
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    assert_eq!(sim.level_id(), "one");
+    sim.gas(1.0);
+    assert!(sim.until(3.0, |sim| sim.run().finished));
+    assert!(!sim.run().unlocked_next);
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    assert_eq!(sim.current(), 1, "the map still moves on");
+    assert_eq!(
+        sim.arrival(),
+        MapArrival {
+            from: Some(0),
+            unlocked: None
+        }
+    );
+}
+
+#[test]
+fn a_restart_after_the_finish_keeps_the_unlock() {
+    let mut sim = Sim::new(vec![short("one"), short("two")]);
+    sim.type_name("Mia");
+    sim.menu(MenuAction::Confirm);
+    sim.menu(MenuAction::Confirm);
+    sim.steps(1);
+    sim.gas(1.0);
+    assert!(sim.until(3.0, |sim| sim.run().finished));
+    sim.controls().restart = true;
+    sim.steps(1);
+    assert!(!sim.run().finished);
+    assert!(sim.run().unlocked_next, "the map still announces level two");
 }
 
 #[test]

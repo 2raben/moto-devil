@@ -9,7 +9,7 @@
 use bevy::prelude::*;
 
 use crate::bike::{self, BikeTuning, Controls};
-use crate::flow::{self, CurrentLevel, Levels, MenuInput, Screen, Selection};
+use crate::flow::{self, CurrentLevel, Levels, MapArrival, MenuInput, Screen, Selection};
 use crate::physics::{self, GameSystems, PhysicsPlugin};
 use crate::progress::{ActivePlayer, Profiles};
 use crate::run::{self, Run};
@@ -23,6 +23,7 @@ impl Plugin for SimulationPlugin {
             .init_state::<Screen>()
             .init_resource::<Levels>()
             .init_resource::<CurrentLevel>()
+            .init_resource::<MapArrival>()
             .init_resource::<MenuInput>()
             .init_resource::<Selection>()
             .init_resource::<Profiles>()
@@ -36,6 +37,7 @@ impl Plugin for SimulationPlugin {
                 Update,
                 (
                     flow::select_player.run_if(in_state(Screen::SelectPlayer)),
+                    flow::level_map.run_if(in_state(Screen::LevelMap)),
                     flow::playing_menu.run_if(in_state(Screen::Playing)),
                     flow::settings_menu.run_if(in_state(Screen::Settings)),
                 ),

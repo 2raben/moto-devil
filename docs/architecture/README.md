@@ -34,7 +34,8 @@ the page's `#moto-devil` canvas in the browser) and the save store for the targe
 and composes the app from plugins in two layers
 ([ADR 0002](decisions/0002-keep-the-simulation-headless-behind-a-controls-resource.md),
 amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resource.md)
-and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.md)).
+[ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.md),
+and [ADR 0011](decisions/0011-unlock-levels-on-a-level-map.md)).
 
 **Simulation**, which runs without a window and is used by the tests:
 
@@ -44,10 +45,11 @@ and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.
 - [physics.rs](../../src/physics.rs): Rapier in `FixedUpdate`, collision groups, the
   `GameSystems::Drive` and `GameSystems::React` sets around Rapier's `PhysicsSet`,
   and `Pose`/`PreviousPose`, which hold every simulated position and angle.
-- [flow.rs](../../src/flow.rs): the `Screen` state (`SelectPlayer`, `Playing`,
-  `Settings`), the `Levels` list and `CurrentLevel`, `MenuInput`/`MenuAction`, the
-  `Selection`, and the systems that pick a player, load levels, move between them,
-  and leave the key settings.
+- [flow.rs](../../src/flow.rs): the `Screen` state (`SelectPlayer`, `LevelMap`,
+  `Playing`, `Settings`), the `Levels` list and `CurrentLevel`,
+  `MenuInput`/`MenuAction`, the `Selection`, `MapArrival`, and the systems that
+  pick a player, choose an unlocked level on the map, load levels, return to the
+  map, and leave the key settings.
 - [level.rs](../../src/level.rs) and [levels/](../../src/levels/mod.rs): the `Level`
   data type (country, ground profile, solids, loops, spikes, traps, checkpoints,
   start, finish, bounds, fall line, contact effects), the `Country` enum, and the
@@ -60,11 +62,11 @@ and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.
   the systems that re-arm, move, trigger, and switch them.
 - [effects.rs](../../src/effects.rs): contact definitions and `CourseEffect` /
   `RideEffects` state for cactus, mud, quicksand, trampoline, and jet pickups.
-- [run.rs](../../src/run.rs): the `Run` resource (time, deaths, flips, finish, crash
-  delay, respawn point, attempt) and the rules for restart, respawn, checkpoints,
+- [run.rs](../../src/run.rs): the `Run` resource (time, deaths, flips, finish, an
+  unlock by this finish, crash delay, respawn point, attempt) and the rules for restart, respawn, checkpoints,
   crashes, the finish, and the clock.
 - [progress.rs](../../src/progress.rs): `Profiles` and `ActivePlayer`, name rules,
-  gravestone rules, and the save format.
+  gravestone rules, unlocked levels, and the save format.
 
 **Presentation and I/O**, which need a window or a file system:
 
@@ -91,6 +93,8 @@ and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.
 - [hud.rs](../../src/hud.rs): the progress panel, controls reminder, cues
   ("Autsch!", "Flip!", "Checkpoint!"), and finish panel; installs the font.
 - [menu.rs](../../src/menu.rs): the "Wer fährt?" screen.
+- [map.rs](../../src/map.rs): the level map, its `MapLayout` geometry, and the
+  camera that follows its bike.
 - [settings.rs](../../src/settings.rs): the "Tasten" screen.
 
 ### Frame and fixed-step flow
@@ -109,13 +113,15 @@ and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.
    - `GameSystems::React`, chained: `read_body_poses`, `sense_ground`,
      `trigger_traps`, `switch_loops`, `reach_checkpoint`, `detect_crash`,
      `reach_finish`, `sense_effects`, `tick_run`.
-4. `Update`: `select_player`, `playing_menu`, or `settings_menu` drain `MenuInput`; visuals draw newly
+4. `Update`: `select_player`, `level_map`, `playing_menu`, or `settings_menu` drain `MenuInput`; visuals draw newly
    spawned scenery, traps, bike, and wheels, and redraw gravestones when `Profiles`
-   changes; the HUD and menu refresh.
+   changes; the HUD, menu, and level map refresh, and the map's bike rides to the
+   chosen level.
 5. `PostUpdate`, before transform propagation: drawings follow interpolated poses,
    the bike is mirrored to its facing, the helmet turns red during a crash, TNT
    shows its fuse and explosion, spent pickups and departed hazards hide, jet
-   flames show active thrust, and then the camera follows the bike.
+   flames show active thrust, and then the camera follows the bike, or the bike on
+   the level map.
 6. `Last`: `save_profiles` writes the progress entry if `Profiles` changed, and
    `save_keys` the keys entry if `KeyBindings` changed, both through the store.
 
@@ -231,8 +237,36 @@ item `moto-devil/keys`; the HUD names the bound keys.
 
 `Profiles` lists the players; `ActivePlayer` is the one riding. A crash farther right
 than any earlier one moves that player's gravestone in the level; finishing marks the
-level done and moves the stone to the finish. The player selection starts each
-player at their first unfinished level.
+level done and moves the stone to the finish.
+
+### Level map and unlocks
+
+[ADR 0011](decisions/0011-unlock-levels-on-a-level-map.md) records the design.
+`Profiles::unlocked` derives which levels a player may ride: the first level,
+every finished level, and the level after each finished one. Nothing new is
+saved. Choosing a player opens the level map at their first unfinished level.
+Left/right and up/down (D-pad on a controller) move between unlocked levels,
+skipping locked ones; Enter (South) rides the chosen level; Escape (East or Start)
+returns to the player selection.
+
+While riding, Escape and Enter after the finish return to the map. After a finish
+the map has moved on to the next level; if the finish was the level's first,
+`Run::unlocked_next` is set, the finish panel names the unlocked level, and
+`MapArrival` makes the map announce it, grow its medallion, and ride the bike
+over from the level just finished. A restart keeps `unlocked_next`.
+
+The map is drawn in world space with the backdrop's `Canvas`: one 640-unit region
+per country with its theme's sky and land as vertex-coloured gradients that blend
+at the borders, a landmark (trees and a practice ramp, pyramids, Uluru, mesas,
+roofs and the Eiffel Tower, peaks), and the country's name and tally on a banner.
+A Catmull-Rom road winds through one medallion per level: green with a tick when
+finished, orange when open, grey with a padlock when locked. The road is paved up
+to every open level and a dotted footpath leads to locked ones; a chequered flag
+ends it, with a cup once every level is done. A small bike rides along the road to
+the chosen level and parks on its medallion, and the camera follows it inside the
+map. The bar at the bottom names the chosen level, whether it is done or how far
+the player's gravestone stands along it, and how many levels the player has
+finished.
 
 ### Browser build and delivery
 
@@ -283,14 +317,17 @@ formatting, Clippy, build, test, and manual-run checks; CI runs the automated on
 and the browser build.
 
 - **Unit tests** beside each module cover level geometry and validation, the
-  built-in levels, name rules, gravestone rules, the save format and damaged files,
-  the save plugin with a memory store, file writing and backups, flip counting, the tilt assists, trap timing, hazards,
+  built-in levels, name rules, gravestone rules, unlocked levels, the level map
+  layout and its road, the save format and damaged files, the save plugin with a
+  memory store, file writing and backups, flip counting, the tilt assists, trap
+  timing, hazards,
   loop halves, poses, camera bounds, and the HUD's number format.
 - **Simulation tests** in [src/tests.rs](../../src/tests.rs) step the real plugins and
   Rapier headless, one fixed step per update. They cover resting, driving and
   braking, jumping, flips, self-righting, the ground lean limit, turning around, head
   crashes and respawn, falling out, pop-up spikes, the finish and progress,
-  checkpoints, restart, the player selection and level flow, and scripted rides that
+  checkpoints, restart, the player selection, the level map with its unlocks and
+  the flow between levels, and scripted rides that
   finish the first two built-in levels, including the loop.
 - [tests/effects.rs](../../src/tests/effects.rs) covers contact effects, the
   trampoline/cactus combination, jet hold/release/exhaustion and reset, overlapping
@@ -301,7 +338,8 @@ and the browser build.
   ride must finish without a crash and meet every trap except jumped hatches.
 - [tests/rendered.rs](../../src/tests/rendered.rs) provides opt-in Linux GPU
   captures of the trampoline/cactus encounter, jet flight, any country level
-  (`MOTO_SHOT=<level id>,<start x>,<frames>,<throttle>`), and the key settings,
+  (`MOTO_SHOT=<level id>,<start x>,<frames>,<throttle>`), the key settings, and the
+  level map (`MOTO_MAP=<levels done>,<frames>`),
   using the actual presentation plugins. Run separately as documented in the contribution guide.
 - The input regression tests verify that held jet intent and latched jump
   presses have distinct release semantics, and that rebound keys drive

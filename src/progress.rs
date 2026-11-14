@@ -158,6 +158,18 @@ impl Profiles {
             .unwrap_or(0)
     }
 
+    /// Which of `levels` the player may ride, by index: the first level, every
+    /// level they have finished, and the level after each finished one. Without
+    /// a player only the first level is open. Unlocks follow from finished
+    /// levels, so the save format needs nothing new.
+    pub fn unlocked(&self, player: Option<usize>, levels: &[&str]) -> Vec<bool> {
+        let player = player.and_then(|player| self.players.get(player));
+        let done = |index: usize| player.is_some_and(|player| player.is_done(levels[index]));
+        (0..levels.len())
+            .map(|index| index == 0 || done(index) || done(index - 1))
+            .collect()
+    }
+
     /// Where each player's gravestone stands in a level, for players who have one.
     pub fn graves<'a>(&'a self, level: &'a str) -> impl Iterator<Item = (usize, Grave)> + 'a {
         self.players
@@ -384,6 +396,36 @@ mod tests {
             0,
             "all done: start again"
         );
+    }
+
+    #[test]
+    fn finishing_a_level_unlocks_the_next() {
+        const THREE: &[&str] = &["level-1", "level-2", "level-3"];
+        let mut profiles = Profiles::default();
+        assert_eq!(profiles.unlocked(None, THREE), [true, false, false]);
+        let mia = profiles.find_or_add("Mia").unwrap();
+        assert_eq!(profiles.unlocked(Some(mia), THREE), [true, false, false]);
+        profiles.record_crash(mia, "level-1", 500.0);
+        assert_eq!(
+            profiles.unlocked(Some(mia), THREE),
+            [true, false, false],
+            "a crash unlocks nothing"
+        );
+        profiles.record_finish(mia, "level-1");
+        assert_eq!(profiles.unlocked(Some(mia), THREE), [true, true, false]);
+        profiles.record_finish(mia, "level-2");
+        assert_eq!(profiles.unlocked(Some(mia), THREE), [true, true, true]);
+        assert_eq!(
+            profiles.unlocked(Some(7), THREE),
+            [true, false, false],
+            "an unknown player"
+        );
+
+        // A save with a gap still opens every finished level and the one after.
+        let mut gap = Profiles::default();
+        let ben = gap.find_or_add("Ben").unwrap();
+        gap.record_finish(ben, "level-2");
+        assert_eq!(gap.unlocked(Some(ben), THREE), [true, true, true]);
     }
 
     #[test]

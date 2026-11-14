@@ -261,11 +261,11 @@ fn spots(seed: u32, (left, right): (f32, f32), gap: f32) -> impl Iterator<Item =
 }
 
 /// Mixes `color` towards the sky so far shapes look hazy.
-fn haze(color: Color, sky: Color, amount: f32) -> Color {
+pub(crate) fn haze(color: Color, sky: Color, amount: f32) -> Color {
     color.mix(&sky, amount)
 }
 
-fn tree(canvas: &mut Canvas, trunk: Color, crown: Color, at: Vec2, size: f32) {
+pub(crate) fn tree(canvas: &mut Canvas, trunk: Color, crown: Color, at: Vec2, size: f32) {
     canvas.rect(
         trunk,
         Rect::new(
@@ -280,7 +280,7 @@ fn tree(canvas: &mut Canvas, trunk: Color, crown: Color, at: Vec2, size: f32) {
     canvas.circle(crown, at + Vec2::new(0.3 * size, 0.6 * size), 0.28 * size);
 }
 
-fn palm(canvas: &mut Canvas, trunk: Color, leaves: Color, at: Vec2, size: f32) {
+pub(crate) fn palm(canvas: &mut Canvas, trunk: Color, leaves: Color, at: Vec2, size: f32) {
     let top = at + Vec2::new(0.15 * size, size);
     canvas.polygon(
         trunk,
@@ -298,7 +298,7 @@ fn palm(canvas: &mut Canvas, trunk: Color, leaves: Color, at: Vec2, size: f32) {
     }
 }
 
-fn saguaro(canvas: &mut Canvas, color: Color, at: Vec2, size: f32) {
+pub(crate) fn saguaro(canvas: &mut Canvas, color: Color, at: Vec2, size: f32) {
     let w = 0.14 * size;
     canvas.rect(
         color,
@@ -327,7 +327,7 @@ fn saguaro(canvas: &mut Canvas, color: Color, at: Vec2, size: f32) {
     }
 }
 
-fn fir(canvas: &mut Canvas, trunk: Color, needles: Color, at: Vec2, size: f32) {
+pub(crate) fn fir(canvas: &mut Canvas, trunk: Color, needles: Color, at: Vec2, size: f32) {
     canvas.rect(
         trunk,
         Rect::new(
@@ -348,7 +348,7 @@ fn fir(canvas: &mut Canvas, trunk: Color, needles: Color, at: Vec2, size: f32) {
     }
 }
 
-fn cloud(canvas: &mut Canvas, color: Color, at: Vec2, size: f32) {
+pub(crate) fn cloud(canvas: &mut Canvas, color: Color, at: Vec2, size: f32) {
     canvas.circle(color, at, 0.5 * size);
     canvas.circle(color, at + Vec2::new(0.55 * size, -0.1 * size), 0.38 * size);
     canvas.circle(
@@ -358,7 +358,7 @@ fn cloud(canvas: &mut Canvas, color: Color, at: Vec2, size: f32) {
     );
 }
 
-fn eiffel_tower(canvas: &mut Canvas, color: Color, at: Vec2, height: f32) {
+pub(crate) fn eiffel_tower(canvas: &mut Canvas, color: Color, at: Vec2, height: f32) {
     let w = 0.32 * height;
     // Four legs meeting at the first platform, with the arch between them.
     let platform = at.y + 0.28 * height;
@@ -417,7 +417,7 @@ fn eiffel_tower(canvas: &mut Canvas, color: Color, at: Vec2, height: f32) {
 }
 
 /// Haussmann-style roofs: blocks with sloped tops and chimneys.
-fn rooftops(
+pub(crate) fn rooftops(
     canvas: &mut Canvas,
     seed: u32,
     wall: Color,

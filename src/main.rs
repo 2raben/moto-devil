@@ -11,6 +11,7 @@ mod hud;
 mod input;
 mod level;
 mod levels;
+mod map;
 mod menu;
 mod physics;
 mod progress;
@@ -44,6 +45,7 @@ fn main() -> AppExit {
         camera::CameraPlugin,
         hud::HudPlugin,
         menu::MenuPlugin,
+        map::LevelMapPlugin,
         settings::SettingsViewPlugin,
     ))
     .run()

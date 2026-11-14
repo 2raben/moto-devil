@@ -264,3 +264,70 @@ fn capture_key_settings() {
     assert_eq!(app.run(), AppExit::Success);
     assert!(completed.load(Ordering::SeqCst));
 }
+
+/// Captures the level map: `MOTO_MAP=<levels done>,<frames>`. The player Mia
+/// has finished the first levels, crashed in the next one, and arrives from
+/// the last finished level, which unlocked the next.
+#[test]
+#[ignore = "requires a Linux display and GPU; writes a screenshot into the temp directory"]
+fn capture_level_map() {
+    use crate::progress::Profiles;
+
+    let spec = std::env::var("MOTO_MAP").unwrap_or_else(|_| "7,120".into());
+    let parts: Vec<usize> = spec.split(',').map(|part| part.parse().unwrap()).collect();
+    let (done, frames) = (parts[0], parts[1]);
+    let levels = Levels::default();
+    let mut profiles = Profiles::default();
+    let mia = profiles.find_or_add("Mia").unwrap();
+    for level in levels.0.iter().take(done) {
+        profiles.record_finish(mia, level.id);
+    }
+    if let Some(level) = levels.0.get(done) {
+        let middle = 0.5 * (level.start.x + level.finish.min.x);
+        profiles.record_crash(mia, level.id, middle);
+    }
+    let current = done.min(levels.0.len() - 1);
+    let completed = Arc::new(AtomicBool::new(false));
+    let mut app = App::new();
+    app.add_plugins(
+        DefaultPlugins
+            .set(WindowPlugin {
+                primary_window: Some(Window {
+                    resolution: (960, 540).into(),
+                    visible: false,
+                    focused: false,
+                    ..default()
+                }),
+                ..default()
+            })
+            .set(WinitPlugin {
+                run_on_any_thread: true,
+            }),
+    )
+    .add_plugins((
+        SimulationPlugin,
+        crate::camera::CameraPlugin,
+        crate::hud::HudPlugin,
+        crate::map::LevelMapPlugin,
+    ))
+    .insert_resource(profiles)
+    .insert_resource(ActivePlayer(Some(mia)))
+    .insert_resource(CurrentLevel(current))
+    .insert_resource(MapArrival {
+        from: done.checked_sub(1),
+        unlocked: (done > 0 && done < levels.0.len()).then_some(done),
+    })
+    .insert_state(Screen::LevelMap)
+    .insert_resource(WinitSettings::continuous())
+    .insert_resource(CountryShot {
+        frames: 0,
+        at: frames,
+        throttle: 0.0,
+        path: std::env::temp_dir().join(format!("moto-devil-map-{done}.png")),
+        requested: false,
+        completed: completed.clone(),
+    })
+    .add_systems(Update, shoot_country);
+    assert_eq!(app.run(), AppExit::Success);
+    assert!(completed.load(Ordering::SeqCst));
+}

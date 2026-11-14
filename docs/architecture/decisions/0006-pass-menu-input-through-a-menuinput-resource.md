@@ -3,7 +3,7 @@ tags: [adr]
 status: accepted
 date: 2026-11-12
 amends: [0002-keep-the-simulation-headless-behind-a-controls-resource.md]
-amended-by: [0009-let-players-rebind-riding-keys-in-the-input-layer.md]
+amended-by: [0009-let-players-rebind-riding-keys-in-the-input-layer.md, 0011-unlock-levels-on-a-level-map.md]
 sources:
   - src/input.rs
   - src/flow.rs
@@ -18,6 +18,11 @@ sources:
 > `src/input.rs` in the input layer. It reads the keyboard itself on the new key
 > settings screen, which Tab (`MenuAction::Settings`) opens from the player
 > selection. The tell below now matches both files.
+>
+> Amended by [ADR 0011](0011-unlock-levels-on-a-level-map.md): a level map sits
+> between the player selection and riding. `MenuAction::Left` and `Right` choose
+> a level there, Enter after the finish and Escape while riding return to the
+> map, and `level_map` drains `MenuInput` on it.
 
 ## Context
 

@@ -86,7 +86,7 @@ fn panel(node: Node) -> impl Bundle {
 /// The controls reminder with the player's keys.
 fn controls_reminder(keys: &KeyBindings) -> String {
     format!(
-        "{} Gas   {} Bremse   {} {} kippen   {} springen   {} umdrehen   {} neu   Esc Spielerauswahl",
+        "{} Gas   {} Bremse   {} {} kippen   {} springen   {} umdrehen   {} neu   Esc Karte",
         keys.label(Action::Gas),
         keys.label(Action::Brake),
         keys.label(Action::TiltLeft),
@@ -314,18 +314,25 @@ fn show_run(
                 let done = place.map_or("", |(done, ..)| done.name());
                 (
                     format!("{done} geschafft!"),
-                    format!("Enter: weiter nach {}", country.name()),
+                    format!("Enter: zur Karte, weiter nach {}", country.name()),
                 )
             } else if current.0 + 1 < levels.0.len() {
-                ("Ziel!".to_string(), "Enter: nächstes Level".to_string())
+                ("Ziel!".to_string(), "Enter: zur Karte".to_string())
             } else {
                 (
                     "Alle Länder geschafft!".to_string(),
-                    "Enter: zur Spielerauswahl".to_string(),
+                    "Enter: zur Karte".to_string(),
                 )
             };
+            let unlocked = levels
+                .0
+                .get(current.0 + 1)
+                .filter(|_| run.unlocked_next)
+                .map_or(String::new(), |level| {
+                    format!("\nFreigeschaltet: {}", level.name)
+                });
             let again = keys.label(Action::Restart);
-            let summary = format!("{title}\n{stats}\n{next}   {again}: nochmal");
+            let summary = format!("{title}\n{stats}{unlocked}\n{next}   {again}: nochmal");
             if text.0 != summary {
                 text.0 = summary;
             }
@@ -349,7 +356,7 @@ mod tests {
     fn the_reminder_names_the_default_keys() {
         assert_eq!(
             controls_reminder(&KeyBindings::default()),
-            "W/↑ Gas   S/↓ Bremse   A/← D/→ kippen   Leertaste springen   E umdrehen   R neu   Esc Spielerauswahl"
+            "W/↑ Gas   S/↓ Bremse   A/← D/→ kippen   Leertaste springen   E umdrehen   R neu   Esc Karte"
         );
     }
 }

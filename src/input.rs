@@ -78,7 +78,8 @@ fn sample_controls(
 }
 
 /// Menu keys and typed text. On the player selection every letter and the
-/// space bar type, so they are not read as riding keys there. On the key
+/// space bar type, so they are not read as riding keys there. The arrows
+/// choose on the player selection and the level map. On the key
 /// settings [`bindings::edit_bindings`] reads the keyboard instead, and a
 /// gamepad can only go back.
 fn collect_menu_actions(
@@ -97,6 +98,8 @@ fn collect_menu_actions(
         return;
     }
     let selecting = *screen.get() == Screen::SelectPlayer;
+    let mapping = *screen.get() == Screen::LevelMap;
+    let choosing = selecting || mapping;
     for event in keyboard.read() {
         if !event.state.is_pressed() {
             continue;
@@ -105,8 +108,10 @@ fn collect_menu_actions(
             KeyCode::Enter | KeyCode::NumpadEnter if !event.repeat => Some(MenuAction::Confirm),
             KeyCode::Escape if !event.repeat => Some(MenuAction::Back),
             KeyCode::Tab if selecting && !event.repeat => Some(MenuAction::Settings),
-            KeyCode::ArrowUp if selecting => Some(MenuAction::Up),
-            KeyCode::ArrowDown if selecting => Some(MenuAction::Down),
+            KeyCode::ArrowUp if choosing => Some(MenuAction::Up),
+            KeyCode::ArrowDown if choosing => Some(MenuAction::Down),
+            KeyCode::ArrowLeft if mapping => Some(MenuAction::Left),
+            KeyCode::ArrowRight if mapping => Some(MenuAction::Right),
             KeyCode::Backspace if selecting => Some(MenuAction::Erase),
             _ => None,
         };
@@ -124,13 +129,24 @@ fn collect_menu_actions(
         if pad.just_pressed(GamepadButton::South) {
             menu.0.push(MenuAction::Confirm);
         }
-        if selecting && pad.just_pressed(GamepadButton::DPadUp) {
+        if choosing && pad.just_pressed(GamepadButton::DPadUp) {
             menu.0.push(MenuAction::Up);
         }
-        if selecting && pad.just_pressed(GamepadButton::DPadDown) {
+        if choosing && pad.just_pressed(GamepadButton::DPadDown) {
             menu.0.push(MenuAction::Down);
         }
-        if !selecting && pad.just_pressed(GamepadButton::Start) {
+        if mapping && pad.just_pressed(GamepadButton::DPadLeft) {
+            menu.0.push(MenuAction::Left);
+        }
+        if mapping && pad.just_pressed(GamepadButton::DPadRight) {
+            menu.0.push(MenuAction::Right);
+        }
+        let back = if mapping {
+            pad.any_just_pressed([GamepadButton::East, GamepadButton::Start])
+        } else {
+            !selecting && pad.just_pressed(GamepadButton::Start)
+        };
+        if back {
             menu.0.push(MenuAction::Back);
         }
     }
