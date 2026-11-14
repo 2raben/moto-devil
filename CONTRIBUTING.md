@@ -71,9 +71,10 @@ cargo build --locked
 cargo test --locked
 ```
 
-[CI](.github/workflows/ci.yml) runs `mise run check`, Clippy for `wasm32`, and the
-browser build on every pull request and push to `main`; a PR should be green before
-review. Tests include unit tests beside each module and
+[CI](.github/workflows/ci.yml) runs `mise run check` and, in a parallel job, Clippy
+for `wasm32` on every pull request; a PR should be green before review. Pushes to
+`main` are not checked again, and the optimized browser build runs only in Pages
+after merging, so run `mise run web:build` before merging changes that may affect it. Tests include unit tests beside each module and
 headless simulation tests in `src/tests.rs`, which step the real plugins at the
 fixed timestep. Prefer focused tests of game rules and ECS systems that can run
 without a window. Include regression coverage for meaningful bugs; avoid tests that
@@ -138,8 +139,9 @@ reload. The storage inspector shows the `moto-devil/progress` and
 
 ### Publishing
 
-[Pages](.github/workflows/pages.yml) publishes `dist/web` to GitHub Pages on every
-push to `main`, or when started by hand from the Actions tab. Once per repository,
+[Pages](.github/workflows/pages.yml) builds and publishes `dist/web` to GitHub Pages
+on every push to `main`, or when started by hand from the Actions tab. If that build
+fails, the previous version stays published. Once per repository,
 choose "GitHub Actions" as the Pages source under Settings → Pages. GitHub Pages
 for a private repository needs a paid plan, and the published page is public.
 
