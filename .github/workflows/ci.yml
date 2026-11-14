@@ -1,11 +1,10 @@
-# Checks every pull request and every push to main: formatting, Clippy, the
-# native build and tests, and the browser build. See CONTRIBUTING.md.
+# Checks every pull request: formatting, Clippy, the native build and tests, and
+# Clippy for the browser target. Pushes to main are not checked again; Pages
+# builds the browser version there. See CONTRIBUTING.md.
 name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -20,7 +19,7 @@ env:
   CARGO_PROFILE_DEV_DEBUG: "0"
 
 jobs:
-  check:
+  native:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,7 +35,21 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Format, Clippy, build, and tests
         run: mise run check
+
+  # Runs beside the native job. The optimized browser build itself runs in
+  # Pages after merging.
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Build scripts run on the host and link with clang and lld.
+      - name: Install the linker
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends clang lld
+      - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Clippy for the browser
         run: cargo clippy --locked --target wasm32-unknown-unknown -- -D warnings
-      - name: Browser build
-        run: mise run web:build
