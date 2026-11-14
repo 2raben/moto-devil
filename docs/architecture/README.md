@@ -13,11 +13,15 @@ with a player selection, levels with traps grouped into countries, saved progres
 and gravestones. The third level implements the
 [Fallen & Power-ups pitch](../pitches/fallen-powerups/pitch--fallen-powerups.md); the
 [Länder pitch](../pitches/laender/pitch--laender.md) adds five countries with three
-levels each.
+levels each, and the [Browserspiel pitch](../pitches/browser-game/pitch--browser-game.md)
+builds it for the browser.
 [Cargo.toml](../../Cargo.toml) uses Rust edition 2024, Bevy 0.20 with default
 features disabled and the `2d`, `audio`, and `ui` feature sets, and `bevy_rapier2d`
 0.37 with only `dim2` ([ADR 0004](decisions/0004-simulate-the-bike-with-rapier.md)).
-Dependencies have a higher development optimization level than the application.
+For `wasm32` it adds Bevy's `web` feature and `web-sys` for local storage; WebGL2
+comes with the `2d` feature set.
+Dependencies have a higher development optimization level than the application;
+the `web` profile optimizes the browser build for size.
 [Cargo.lock](../../Cargo.lock) pins dependency resolution;
 [.cargo/config.toml](../../.cargo/config.toml) configures Clang and LLD for x86_64
 Linux, and [.mise/](../../.mise/config.toml) pins the toolchain and defines tasks
@@ -25,7 +29,9 @@ Linux, and [.mise/](../../.mise/config.toml) pins the toolchain and defines task
 Sans Bold, is compiled in from [assets/fonts/](../../assets/fonts/LICENSE-DejaVu.txt)
 because Bevy's built-in font has no umlauts.
 
-[src/main.rs](../../src/main.rs) composes the app from plugins in two layers
+[src/main.rs](../../src/main.rs) chooses the window (a 960 × 540 desktop window, or
+the page's `#moto-devil` canvas in the browser) and the save store for the target,
+and composes the app from plugins in two layers
 ([ADR 0002](decisions/0002-keep-the-simulation-headless-behind-a-controls-resource.md),
 amended by [ADR 0006](decisions/0006-pass-menu-input-through-a-menuinput-resource.md)
 and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.md)).
@@ -68,9 +74,13 @@ and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.
   key settings editor, and the keys file format
   ([ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.md)).
   With `input.rs`, the only module that reads devices.
-- [save.rs](../../src/save.rs): loads and writes the progress file
-  ([ADR 0005](decisions/0005-save-progress-in-a-versioned-text-file.md)) and the
-  keys file. The only module that touches files.
+- [save.rs](../../src/save.rs): loads and writes progress
+  ([ADR 0005](decisions/0005-save-progress-in-a-versioned-text-file.md)) and keys
+  through a `Store` in the `SaveStore` resource
+  ([ADR 0010](decisions/0010-save-through-a-store-with-local-storage-in-the-browser.md)):
+  [save/file.rs](../../src/save/file.rs) natively, the only module that touches
+  files, and [save/browser.rs](../../src/save/browser.rs) with the page's local
+  storage in the browser.
 - [visuals.rs](../../src/visuals.rs): the palette; ground, loop, spike, trap, flag,
   bike, wheel, and gravestone drawings in the country's colours; interpolation from
   `Pose`.
@@ -106,8 +116,8 @@ and [ADR 0009](decisions/0009-let-players-rebind-riding-keys-in-the-input-layer.
    the bike is mirrored to its facing, the helmet turns red during a crash, TNT
    shows its fuse and explosion, spent pickups and departed hazards hide, jet
    flames show active thrust, and then the camera follows the bike.
-6. `Last`: `save_profiles` writes the progress file if `Profiles` changed, and
-   `save_keys` the keys file if `KeyBindings` changed.
+6. `Last`: `save_profiles` writes the progress entry if `Profiles` changed, and
+   `save_keys` the keys entry if `KeyBindings` changed, both through the store.
 
 ### Bike model
 
@@ -214,7 +224,8 @@ punctuation keys show the character the layout typed when they were bound. A key
 does one thing only: binding it again takes it from its old action, and the view
 says so and lists actions left without a key. Escape and Enter cannot be bound.
 Gamepad controls and menu keys are fixed. The bindings are shared by all players
-on the computer and saved in `moto-devil/keys.txt`; the HUD names the bound keys.
+on the computer (or browser) and saved in `moto-devil/keys.txt` or the local storage
+item `moto-devil/keys`; the HUD names the bound keys.
 
 ### Progress and gravestones
 
@@ -222,6 +233,27 @@ on the computer and saved in `moto-devil/keys.txt`; the HUD names the bound keys
 than any earlier one moves that player's gravestone in the level; finishing marks the
 level done and moves the stone to the finish. The player selection starts each
 player at their first unfinished level.
+
+### Browser build and delivery
+
+The same crate builds for `wasm32-unknown-unknown`. `mise run web:build` compiles
+with the `web` profile, generates the JavaScript glue with the `wasm-bindgen` CLI
+pinned to the crate version in `Cargo.lock`, shrinks the module with `wasm-opt`,
+and copies [web/index.html](../../web/index.html) into `dist/web`. The page holds a
+16:9 field with the `#moto-devil` canvas, which Bevy fills; it shows „Lädt …“
+until the module has started, a notice when the browser has no WebGL2, and then
+focuses the canvas. Bevy keeps the browser's default key handling from the canvas,
+so the arrows and Space do not scroll and Tab stays in the game. The font is
+compiled in, so the page loads no other files and works under any path. Escape on
+the player selection does not quit in the browser (`flow::CAN_QUIT`), and its hint
+leaves out "Esc beenden". The browser runs single-threaded; GitHub Pages cannot
+send the headers that threads would need.
+
+[.github/workflows/ci.yml](../../.github/workflows/ci.yml) runs `mise run check`,
+Clippy for `wasm32`, and `mise run web:build` on pull requests and pushes to
+`main`. [.github/workflows/pages.yml](../../.github/workflows/pages.yml) builds the
+page on every push to `main` (or on demand) and publishes `dist/web` to GitHub
+Pages; only its deploy job may write to Pages.
 
 ## Code conventions and boundaries
 
@@ -247,11 +279,12 @@ folders or new plugins only when a feature needs them.
 ## Validation
 
 The [contribution guide](../../CONTRIBUTING.md#setup-and-validation) lists the
-formatting, Clippy, build, test, and manual-run checks. There is no CI workflow.
+formatting, Clippy, build, test, and manual-run checks; CI runs the automated ones
+and the browser build.
 
 - **Unit tests** beside each module cover level geometry and validation, the
   built-in levels, name rules, gravestone rules, the save format and damaged files,
-  file writing and backups, flip counting, the tilt assists, trap timing, hazards,
+  the save plugin with a memory store, file writing and backups, flip counting, the tilt assists, trap timing, hazards,
   loop halves, poses, camera bounds, and the HUD's number format.
 - **Simulation tests** in [src/tests.rs](../../src/tests.rs) step the real plugins and
   Rapier headless, one fixed step per update. They cover resting, driving and

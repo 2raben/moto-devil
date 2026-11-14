@@ -2,6 +2,7 @@
 tags: [adr]
 status: accepted
 date: 2026-11-12
+amended-by: [0010-save-through-a-store-with-local-storage-in-the-browser.md]
 sources:
   - src/progress.rs
   - src/save.rs
@@ -10,6 +11,12 @@ sources:
 ---
 
 # 0005 — Save progress in a versioned text file in the user's data directory
+
+> Amended by [ADR 0010](0010-save-through-a-store-with-local-storage-in-the-browser.md):
+> `save.rs` now reads and writes through a `Store`. The file handling described
+> below moved unchanged to `src/save/file.rs`; the browser build stores the same
+> texts in local storage, so the consequence "a web build would not keep progress"
+> no longer holds. In the tell, `std::fs` now matches only `src/save/file.rs`.
 
 ## Context
 
