@@ -71,7 +71,9 @@ cargo build --locked
 cargo test --locked
 ```
 
-There are no CI workflows yet. Tests include unit tests beside each module and
+[CI](.github/workflows/ci.yml) runs `mise run check`, Clippy for `wasm32`, and the
+browser build on every pull request and push to `main`; a PR should be green before
+review. Tests include unit tests beside each module and
 headless simulation tests in `src/tests.rs`, which step the real plugins at the
 fixed timestep. Prefer focused tests of game rules and ECS systems that can run
 without a window. Include regression coverage for meaningful bugs; avoid tests that
@@ -86,7 +88,7 @@ mise run run
 Check the affected behavior manually:
 
 - The player selection shows "Wer fährt?"; typing a name (umlauts included) and
-  Enter starts riding; ↑/↓ picks an existing player; Escape quits.
+  Enter starts riding; ↑/↓ picks an existing player; Escape quits (natively only).
 - W/↑ accelerates smoothly, S/↓ brakes, A/D and ←/→ tilt; holding a tilt in the air
   flips the bike, and releasing it lets the bike right itself. On the ground the bike
   does not flip over backwards.
@@ -118,6 +120,28 @@ Check the affected behavior manually:
 
 Record what was checked; if no graphical environment is available, report that
 limitation.
+
+For changes to the browser build, the page, saving, or input, also run:
+
+```sh
+mise run web:serve    # builds dist/web and serves it on http://127.0.0.1:8080
+PORT=8093 mise run web:serve    # if 8080 is taken
+```
+
+and check in a current Firefox and Chrome: the page shows „Lädt …“ and then the
+player selection; typing works without clicking first, and after clicking
+elsewhere a click on the field brings the keyboard back; the arrows and Space do
+not scroll the page; Escape on the player selection does nothing; ride, crash,
+reload, and the player and gravestone are still there; rebound keys survive a
+reload. The storage inspector shows the `moto-devil/progress` and
+`moto-devil/keys` items.
+
+### Publishing
+
+[Pages](.github/workflows/pages.yml) publishes `dist/web` to GitHub Pages on every
+push to `main`, or when started by hand from the Actions tab. Once per repository,
+choose "GitHub Actions" as the Pages source under Settings → Pages. GitHub Pages
+for a private repository needs a paid plan, and the published page is public.
 
 Optional Linux GPU captures exercise the actual simulation, visuals and HUD with
 scripted controls. They need a working display/GPU, use a hidden window and no
