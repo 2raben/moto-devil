@@ -1,19 +1,22 @@
-//! Reads and writes [`Profiles`] and the [`KeyBindings`] in the user's data
-//! directory.
+//! Loads and saves [`Profiles`] and the [`KeyBindings`] through a [`Store`]: files
+//! in the user's data directory natively, the page's local storage in the
+//! browser, and memory in tests. See ADR 0005 and ADR 0010.
 //!
-//! Each file is untrusted: it is size-limited and checked line by line by
-//! [`progress::decode`] or [`bindings::decode`]. An unreadable file is moved
-//! aside as a backup and the game starts with an empty list or the default
-//! keys. Writes go to a temporary file in the same directory first and then
-//! replace the old file, so a crash never leaves half a file. See ADR 0005 and
-//! ADR 0009.
+//! Every stored text is untrusted: stores refuse texts larger than the entry's
+//! limit, and [`progress::decode`] or [`bindings::decode`] check the rest line
+//! by line. An unusable entry is moved aside as a backup and the game starts
+//! with an empty list or the default keys.
 //!
-//! This plugin is not part of the headless simulation; tests use the pure
-//! functions and a temporary directory.
+//! This plugin is not part of the headless simulation. `main.rs` chooses the
+//! store for the platform and inserts it as [`SaveStore`]; without one the game
+//! runs but does not save.
 
-use std::fs;
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+#[cfg(target_arch = "wasm32")]
+mod browser;
+#[cfg(not(target_arch = "wasm32"))]
+mod file;
+
+use std::io;
 
 use bevy::prelude::*;
 
@@ -21,9 +24,75 @@ use crate::bindings::{self, KeyBindings, MAX_KEYS_BYTES};
 use crate::flow::Levels;
 use crate::progress::{self, KnownLevel, MAX_SAVE_BYTES, Profiles};
 
-const APP_DIR: &str = "moto-devil";
-const FILE_NAME: &str = "progress.txt";
-const KEYS_FILE_NAME: &str = "keys.txt";
+#[cfg(target_arch = "wasm32")]
+pub use browser::BrowserStore;
+#[cfg(not(target_arch = "wasm32"))]
+pub use file::FileStore;
+
+/// One saved text.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Entry {
+    /// The players and their progress, in the format of [`progress::encode`].
+    Progress,
+    /// The riding keys, in the format of [`bindings::encode`].
+    Keys,
+}
+
+impl Entry {
+    /// The stable name every store derives its file or key from.
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Progress => "progress",
+            Self::Keys => "keys",
+        }
+    }
+
+    /// Larger texts are not read.
+    pub fn max_bytes(self) -> usize {
+        match self {
+            Self::Progress => MAX_SAVE_BYTES,
+            Self::Keys => MAX_KEYS_BYTES,
+        }
+    }
+
+    /// An error if `len` bytes are more than this entry may hold.
+    fn check_size(self, len: usize) -> io::Result<()> {
+        if len > self.max_bytes() {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("larger than {} bytes", self.max_bytes()),
+            ));
+        }
+        Ok(())
+    }
+}
+
+/// Where saved texts live. A store only moves text; formats and checks stay
+/// with the data they describe.
+pub trait Store: Send + Sync + 'static {
+    /// The entry's text, `None` if there is none, or an error if it cannot be
+    /// read or is larger than [`Entry::max_bytes`].
+    fn read(&self, entry: Entry) -> io::Result<Option<String>>;
+
+    /// Replaces the entry's text. A failed write leaves the old text intact.
+    fn write(&mut self, entry: Entry, text: &str) -> io::Result<()>;
+
+    /// Moves an unusable entry aside, so it is kept but no longer read.
+    fn back_up(&mut self, entry: Entry) -> io::Result<()>;
+
+    /// Where the entry lives, for log messages.
+    fn describe(&self, entry: Entry) -> String;
+}
+
+/// The store this run saves to.
+#[derive(Resource)]
+pub struct SaveStore(Box<dyn Store>);
+
+impl SaveStore {
+    pub fn new(store: impl Store) -> Self {
+        Self(Box::new(store))
+    }
+}
 
 pub struct SavePlugin;
 
@@ -35,7 +104,8 @@ impl Plugin for SavePlugin {
                 (
                     save_profiles.run_if(resource_changed::<Profiles>),
                     save_keys.run_if(resource_changed::<KeyBindings>),
-                ),
+                )
+                    .run_if(resource_exists::<SaveStore>),
             );
     }
 }
@@ -48,32 +118,6 @@ struct SavedText(String);
 /// The same for the key bindings.
 #[derive(Resource, Default)]
 struct SavedKeys(String);
-
-/// The per-user data directory of this platform, without any game subfolder.
-fn data_dir() -> Option<PathBuf> {
-    let env_dir = |name: &str| {
-        std::env::var_os(name)
-            .map(PathBuf::from)
-            .filter(|path| path.is_absolute())
-    };
-    if cfg!(target_os = "windows") {
-        env_dir("APPDATA")
-    } else if cfg!(target_os = "macos") {
-        env_dir("HOME").map(|home| home.join("Library/Application Support"))
-    } else {
-        env_dir("XDG_DATA_HOME").or_else(|| env_dir("HOME").map(|home| home.join(".local/share")))
-    }
-}
-
-/// Where the progress file lives, if the platform has a data directory.
-pub fn save_path() -> Option<PathBuf> {
-    data_dir().map(|dir| dir.join(APP_DIR).join(FILE_NAME))
-}
-
-/// Where the key bindings live, next to the progress file.
-pub fn keys_path() -> Option<PathBuf> {
-    data_dir().map(|dir| dir.join(APP_DIR).join(KEYS_FILE_NAME))
-}
 
 fn known_levels(levels: &Levels) -> Vec<KnownLevel<'_>> {
     levels
@@ -90,131 +134,141 @@ fn known_levels(levels: &Levels) -> Vec<KnownLevel<'_>> {
         .collect()
 }
 
-/// Reads the profiles at `path`. A missing file gives an empty list; a file that
-/// cannot be used is renamed to `<name>.broken` and also gives an empty list.
-pub fn load(path: &Path, levels: &[KnownLevel]) -> Profiles {
-    load_with(path, MAX_SAVE_BYTES, |text| progress::decode(text, levels))
+/// Reads the profiles. A missing entry gives an empty list; an entry that
+/// cannot be used is moved aside and also gives an empty list.
+pub fn load(store: &mut dyn Store, levels: &[KnownLevel]) -> Profiles {
+    load_with(store, Entry::Progress, |text| {
+        progress::decode(text, levels)
+    })
 }
 
-/// Reads the key bindings at `path`. A missing file gives the default keys; a
-/// file that cannot be used is renamed to `<name>.broken` and also gives them.
-pub fn load_bindings(path: &Path) -> KeyBindings {
-    load_with(path, MAX_KEYS_BYTES, bindings::decode)
+/// Reads the key bindings. A missing entry gives the default keys; an entry
+/// that cannot be used is moved aside and also gives them.
+pub fn load_bindings(store: &mut dyn Store) -> KeyBindings {
+    load_with(store, Entry::Keys, bindings::decode)
 }
 
-/// Decodes the file at `path`, or gives the default if it is missing or
-/// cannot be used, moving a broken file aside.
+/// Decodes the entry, or gives the default if it is missing or cannot be
+/// used, moving a broken entry aside.
 fn load_with<T: Default, E: std::fmt::Display>(
-    path: &Path,
-    max_bytes: usize,
+    store: &mut dyn Store,
+    entry: Entry,
     decode: impl FnOnce(&str) -> Result<T, E>,
 ) -> T {
-    let text = match read_limited(path, max_bytes) {
-        Ok(Some(text)) => text,
+    let problem = match store.read(entry) {
         Ok(None) => return T::default(),
-        Err(error) => {
-            warn!("Could not read {}: {error}", path.display());
-            back_up(path);
-            return T::default();
-        }
+        Ok(Some(text)) => match decode(&text) {
+            Ok(value) => return value,
+            Err(error) => format!("Ignoring {}: {error}", store.describe(entry)),
+        },
+        Err(error) => format!("Could not read {}: {error}", store.describe(entry)),
     };
-    match decode(&text) {
-        Ok(value) => value,
-        Err(error) => {
-            warn!("Ignoring {}: {error}", path.display());
-            back_up(path);
-            T::default()
-        }
+    warn!("{problem}");
+    if let Err(error) = store.back_up(entry) {
+        warn!("Could not move {} aside: {error}", store.describe(entry));
     }
+    T::default()
 }
 
-/// The file's text, `None` if it does not exist, or an error if it is larger
-/// than `max_bytes`, unreadable, or not UTF-8.
-fn read_limited(path: &Path, max_bytes: usize) -> io::Result<Option<String>> {
-    let metadata = match fs::metadata(path) {
-        Ok(metadata) => metadata,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(error),
-    };
-    if !metadata.is_file() || metadata.len() > max_bytes as u64 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "not a regular file of a sensible size",
-        ));
-    }
-    let bytes = fs::read(path)?;
-    String::from_utf8(bytes)
-        .map(Some)
-        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "not UTF-8 text"))
-}
-
-fn back_up(path: &Path) {
-    let mut backup = path.as_os_str().to_owned();
-    backup.push(".broken");
-    if let Err(error) = fs::rename(path, &backup) {
-        warn!("Could not move {} aside: {error}", path.display());
-    }
-}
-
-/// Writes `text` to `path` through a temporary file in the same directory.
-pub fn write_atomic(path: &Path, text: &str) -> io::Result<()> {
-    let dir = path
-        .parent()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "no parent directory"))?;
-    fs::create_dir_all(dir)?;
-    let mut temporary = path.as_os_str().to_owned();
-    temporary.push(".tmp");
-    let temporary = PathBuf::from(temporary);
-    {
-        let mut file = fs::File::create(&temporary)?;
-        file.write_all(text.as_bytes())?;
-        file.sync_all()?;
-    }
-    fs::rename(&temporary, path)
-}
-
-fn load_profiles(mut commands: Commands, levels: Res<Levels>) {
-    let Some(path) = save_path() else {
-        warn!("No data directory found; progress will not be saved");
+fn load_profiles(mut commands: Commands, levels: Res<Levels>, store: Option<ResMut<SaveStore>>) {
+    let Some(mut store) = store else {
+        warn!("No place to save found; progress will not be saved");
         return;
     };
-    let profiles = load(&path, &known_levels(&levels));
+    let profiles = load(store.0.as_mut(), &known_levels(&levels));
     commands.insert_resource(SavedText(progress::encode(&profiles)));
     commands.insert_resource(profiles);
 }
 
-fn save_profiles(profiles: Res<Profiles>, saved: Option<ResMut<SavedText>>) {
+fn save_profiles(
+    profiles: Res<Profiles>,
+    saved: Option<ResMut<SavedText>>,
+    mut store: ResMut<SaveStore>,
+) {
     if let Some(mut saved) = saved {
-        write_if_changed(&mut saved.0, progress::encode(&profiles), save_path());
+        let text = progress::encode(&profiles);
+        write_if_changed(store.0.as_mut(), Entry::Progress, &mut saved.0, text);
     }
 }
 
-fn load_keys(mut commands: Commands) {
-    let Some(path) = keys_path() else {
+fn load_keys(mut commands: Commands, store: Option<ResMut<SaveStore>>) {
+    let Some(mut store) = store else {
         return;
     };
-    let bindings = load_bindings(&path);
+    let bindings = load_bindings(store.0.as_mut());
     commands.insert_resource(SavedKeys(bindings::encode(&bindings)));
     commands.insert_resource(bindings);
 }
 
-fn save_keys(bindings: Res<KeyBindings>, saved: Option<ResMut<SavedKeys>>) {
+fn save_keys(
+    bindings: Res<KeyBindings>,
+    saved: Option<ResMut<SavedKeys>>,
+    mut store: ResMut<SaveStore>,
+) {
     if let Some(mut saved) = saved {
-        write_if_changed(&mut saved.0, bindings::encode(&bindings), keys_path());
+        let text = bindings::encode(&bindings);
+        write_if_changed(store.0.as_mut(), Entry::Keys, &mut saved.0, text);
     }
 }
 
-/// Writes `text` to `path` unless it is what was last loaded or written.
-fn write_if_changed(saved: &mut String, text: String, path: Option<PathBuf>) {
+/// Writes `text` unless it is what was last loaded or written.
+fn write_if_changed(store: &mut dyn Store, entry: Entry, saved: &mut String, text: String) {
     if text == *saved {
         return;
     }
-    let Some(path) = path else {
-        return;
-    };
-    match write_atomic(&path, &text) {
+    match store.write(entry, &text) {
         Ok(()) => *saved = text,
-        Err(error) => warn!("Could not save {}: {error}", path.display()),
+        Err(error) => warn!("Could not save {}: {error}", store.describe(entry)),
+    }
+}
+
+/// A store in memory, shared between clones so a test can look inside.
+#[cfg(test)]
+#[derive(Clone, Default)]
+pub struct MemoryStore(
+    std::sync::Arc<std::sync::Mutex<std::collections::BTreeMap<String, String>>>,
+);
+
+#[cfg(test)]
+impl MemoryStore {
+    /// The text stored under `key`: an entry name, or a name with `.broken`.
+    pub fn get(&self, key: &str) -> Option<String> {
+        self.0.lock().unwrap().get(key).cloned()
+    }
+
+    pub fn set(&self, key: &str, text: &str) {
+        self.0
+            .lock()
+            .unwrap()
+            .insert(key.to_owned(), text.to_owned());
+    }
+}
+
+#[cfg(test)]
+impl Store for MemoryStore {
+    fn read(&self, entry: Entry) -> io::Result<Option<String>> {
+        let text = self.get(entry.name());
+        if let Some(text) = &text {
+            entry.check_size(text.len())?;
+        }
+        Ok(text)
+    }
+
+    fn write(&mut self, entry: Entry, text: &str) -> io::Result<()> {
+        self.set(entry.name(), text);
+        Ok(())
+    }
+
+    fn back_up(&mut self, entry: Entry) -> io::Result<()> {
+        let mut entries = self.0.lock().unwrap();
+        if let Some(text) = entries.remove(entry.name()) {
+            entries.insert(format!("{}.broken", entry.name()), text);
+        }
+        Ok(())
+    }
+
+    fn describe(&self, entry: Entry) -> String {
+        format!("memory entry `{}`", entry.name())
     }
 }
 
@@ -228,64 +282,111 @@ mod tests {
         max_x: 2000.0,
     }];
 
-    /// A fresh directory under the system temp dir for one test.
-    fn scratch(name: &str) -> PathBuf {
-        let dir =
-            std::env::temp_dir().join(format!("moto-devil-test-{}-{name}", std::process::id()));
-        let _ = fs::remove_dir_all(&dir);
-        dir
-    }
-
     #[test]
     fn writes_and_reads_back_progress() {
-        let dir = scratch("roundtrip");
-        let path = dir.join("nested").join(FILE_NAME);
+        let mut store = MemoryStore::default();
         let mut profiles = Profiles::default();
         let mia = profiles.find_or_add("Mia").unwrap();
         profiles.record_crash(mia, "level-1", 321.0);
 
-        write_atomic(&path, &progress::encode(&profiles)).unwrap();
-        assert_eq!(load(&path, LEVELS), profiles);
-        assert!(!dir.join("nested").join("progress.txt.tmp").exists());
-        fs::remove_dir_all(dir).unwrap();
+        let mut saved = String::new();
+        write_if_changed(
+            &mut store,
+            Entry::Progress,
+            &mut saved,
+            progress::encode(&profiles),
+        );
+        assert_eq!(load(&mut store, LEVELS), profiles);
+        assert_eq!(saved, progress::encode(&profiles));
     }
 
     #[test]
-    fn a_missing_file_is_an_empty_list() {
-        let dir = scratch("missing");
-        assert_eq!(load(&dir.join(FILE_NAME), LEVELS), Profiles::default());
+    fn a_missing_entry_is_an_empty_list() {
+        assert_eq!(
+            load(&mut MemoryStore::default(), LEVELS),
+            Profiles::default()
+        );
     }
 
     #[test]
-    fn a_broken_file_is_moved_aside() {
-        let dir = scratch("broken");
-        fs::create_dir_all(&dir).unwrap();
-        let path = dir.join(FILE_NAME);
-        fs::write(&path, [0xff, 0xfe, 0x00]).unwrap();
-        assert_eq!(load(&path, LEVELS), Profiles::default());
-        assert!(!path.exists());
-        assert!(dir.join("progress.txt.broken").exists());
+    fn a_broken_entry_is_moved_aside() {
+        let mut store = MemoryStore::default();
+        store.set("progress", "something else\n");
+        assert_eq!(load(&mut store, LEVELS), Profiles::default());
+        assert_eq!(store.get("progress"), None);
+        assert_eq!(
+            store.get("progress.broken").as_deref(),
+            Some("something else\n")
+        );
+    }
 
-        fs::write(&path, "something else\n").unwrap();
-        assert_eq!(load(&path, LEVELS), Profiles::default());
-        assert!(dir.join("progress.txt.broken").exists());
-        fs::remove_dir_all(dir).unwrap();
+    #[test]
+    fn an_oversized_entry_is_moved_aside() {
+        let mut store = MemoryStore::default();
+        let huge = format!("moto-devil-save 1\n{}", "x".repeat(MAX_SAVE_BYTES));
+        store.set("progress", &huge);
+        assert_eq!(load(&mut store, LEVELS), Profiles::default());
+        assert!(store.get("progress.broken").is_some());
     }
 
     #[test]
     fn key_bindings_round_trip_and_fall_back_to_the_defaults() {
-        let dir = scratch("keys");
-        let path = dir.join(KEYS_FILE_NAME);
-        assert_eq!(load_bindings(&path), KeyBindings::default(), "no file");
+        let mut store = MemoryStore::default();
+        assert_eq!(load_bindings(&mut store), KeyBindings::default(), "none");
 
         let keys = bindings::decode("moto-devil-keys 1\nkey\tjump\tKeyK\tK\n").unwrap();
         assert_ne!(keys, KeyBindings::default());
-        write_atomic(&path, &bindings::encode(&keys)).unwrap();
-        assert_eq!(load_bindings(&path), keys);
+        store.write(Entry::Keys, &bindings::encode(&keys)).unwrap();
+        assert_eq!(load_bindings(&mut store), keys);
 
-        fs::write(&path, "garbage\n").unwrap();
-        assert_eq!(load_bindings(&path), KeyBindings::default());
-        assert!(dir.join("keys.txt.broken").exists());
-        fs::remove_dir_all(dir).unwrap();
+        store.set("keys", "garbage\n");
+        assert_eq!(load_bindings(&mut store), KeyBindings::default());
+        assert_eq!(store.get("keys.broken").as_deref(), Some("garbage\n"));
+    }
+
+    /// An app with only the save plugin and the resources it reads.
+    fn app(store: Option<MemoryStore>) -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins)
+            .insert_resource(Levels(crate::levels::all()))
+            .init_resource::<Profiles>()
+            .init_resource::<KeyBindings>()
+            .add_plugins(SavePlugin);
+        if let Some(store) = store {
+            app.insert_resource(SaveStore::new(store));
+        }
+        app
+    }
+
+    #[test]
+    fn the_plugin_loads_at_startup_and_saves_changes() {
+        let store = MemoryStore::default();
+        store.set("progress", "moto-devil-save 1\nplayer\tMia\n");
+        let mut app = app(Some(store.clone()));
+        app.update();
+        assert_eq!(app.world().resource::<Profiles>().players.len(), 1);
+        assert_eq!(store.get("keys"), None, "nothing changed, nothing written");
+
+        app.world_mut()
+            .resource_mut::<Profiles>()
+            .find_or_add("Ben")
+            .unwrap();
+        app.update();
+        assert_eq!(
+            store.get("progress").as_deref(),
+            Some("moto-devil-save 1\nplayer\tMia\nplayer\tBen\n")
+        );
+    }
+
+    #[test]
+    fn without_a_store_the_game_runs_and_does_not_save() {
+        let mut app = app(None);
+        app.update();
+        app.world_mut()
+            .resource_mut::<Profiles>()
+            .find_or_add("Mia")
+            .unwrap();
+        app.update();
+        assert_eq!(app.world().resource::<Profiles>().players.len(), 1);
     }
 }

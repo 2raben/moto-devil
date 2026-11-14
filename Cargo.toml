@@ -14,8 +14,22 @@ bevy = { version = "0.20.1", default-features = false, features = [
 ] }
 bevy_rapier2d = { version = "0.37", default-features = false, features = ["dim2"] }
 
+# The browser build (`mise run web:build`) renders with WebGL2, which the `2d`
+# feature set already includes, and saves to the page's local storage.
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+bevy = { version = "0.20.1", default-features = false, features = ["web"] }
+web-sys = { version = "0.3.107", features = ["Storage", "Window"] }
+
 [profile.dev]
 opt-level = 1
 
 [profile.dev.package."*"]
 opt-level = 3
+
+# The browser build: small, because the page downloads it on every visit.
+[profile.web]
+inherits = "release"
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
+strip = "debuginfo"

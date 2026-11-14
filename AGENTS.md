@@ -23,9 +23,12 @@ for significant choices and their rationale.
   with their progress and save format).
 - `src/input.rs`, `bindings.rs`, `save.rs`, `visuals.rs`, `backdrop.rs`, `camera.rs`,
   `hud.rs`, `menu.rs`, `settings.rs`: device input, rebindable riding keys, the
-  progress and keys files, drawing and render interpolation, country themes and
+  saving progress and keys, drawing and render interpolation, country themes and
   parallax backdrops, the camera, on-screen text, the player selection, and the key
   settings screen.
+- `src/save/`: the save stores, files natively and local storage in the browser.
+- `web/index.html`: the page of the browser build; `.github/workflows/`: CI and
+  the GitHub Pages publication.
 - `src/tests.rs` and `src/tests/`: headless simulation tests of the bike, traps,
   effects, run rules, the flow, and scripted rides through every level, plus opt-in
   GPU captures.
@@ -33,8 +36,8 @@ for significant choices and their rationale.
 - `Cargo.toml` and `.cargo/config.toml`: dependencies, build profiles, and Linux
   linker settings.
 - `shell.nix`: native libraries for NixOS; run Cargo and mise tasks inside `nix-shell` there.
-- `.mise/config.toml` and `.mise/tasks/`: the pinned toolchain and the `build`,
-  `test`, `run`, `check`, and `fmt` tasks.
+- `.mise/config.toml` and `.mise/tasks/`: the pinned toolchain and web tools, and
+  the `build`, `test`, `run`, `check`, `fmt`, `web:build`, and `web:serve` tasks.
 - [docs/idea.md](docs/idea.md): game direction and longer-term possibilities.
 - [docs/pitches/](docs/pitches/README.md): bounded feature proposals and companion sketches,
   written in German.

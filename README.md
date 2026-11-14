@@ -11,13 +11,15 @@ run the game.
 | Path | Purpose |
 | --- | --- |
 | `src/` | The game: headless simulation (with Rapier) plus presentation plugins |
+| `web/` | The page for the browser build (`mise run web:build`) |
+| `.github/workflows/` | CI checks and the GitHub Pages publication |
 | `assets/fonts/` | The compiled-in UI font (DejaVu Sans Bold) and its license |
 | `docs/idea.md` | Game direction and longer-term possibilities |
 | `docs/pitches/` | Shaped feature proposals in German (Problem, Lösung, Sicherheit, Rabbit Holes, No-Gos) |
 | `docs/architecture/` | Current structure and conventions, and [decision records](docs/architecture/decisions/README.md) |
 | `.agents/skills/` | Bevy 0.20 skills for coding agents; versions in `skills-lock.json` |
 | `shell.nix` | Native build and runtime libraries for NixOS (`nix-shell`) |
-| `.mise/` | Pinned Rust toolchain and `build`, `test`, `run`, `check`, `fmt`, `agents:init-claude` tasks |
+| `.mise/` | Pinned Rust toolchain and web tools, and `build`, `test`, `run`, `check`, `fmt`, `web:build`, `web:serve`, `agents:init-claude` tasks |
 | `AGENTS.md`, `CONTRIBUTING.md` | Working brief for agents; workflow and validation for everyone |
 
 ## How to play
@@ -48,7 +50,7 @@ shows them while riding. Escape, Enter, and the controller cannot be rebound.
 Riding keys are physical positions, so WASD and E stay in place on any keyboard
 layout. In the air the bike slowly rights itself when no tilt key is held, and on
 the ground it never leans far enough to flip over. Escape on the player selection
-quits.
+quits; in the browser, close the tab instead.
 
 The third level, **Fallen & Flugstunden**, introduces cactus, mud, diving ravens,
 rising blocks, rolling and bouncing balls, trampolines, and short jet flights.
@@ -67,10 +69,23 @@ Progress is saved in `moto-devil/progress.txt` in your data directory
 (`~/.local/share` on Linux). Edit or delete that file to rename or remove players.
 Key bindings are saved next to it in `keys.txt`; delete it to restore the defaults.
 
+## Play in the browser
+
+Every push to `main` publishes the game to GitHub Pages at
+<https://2raben.github.io/moto-devil/>. It runs in a current
+desktop Firefox, Chrome, or Safari with WebGL2, played with the keyboard (or a
+controller, if the browser reports it). Click the field if it does not react to
+keys. Progress and keys are saved in the browser's local storage for that site, as
+the items `moto-devil/progress` and `moto-devil/keys`; clearing the site's data
+removes them. To try the browser build locally, run `mise run web:serve` and open
+<http://127.0.0.1:8080>.
+
 ## Requirements
 
 - [mise](https://mise.jdx.dev), recommended: `mise install` provides Rust 1.97.1
-  with rustfmt and Clippy, as pinned in [.mise/config.toml](.mise/config.toml).
+  with rustfmt, Clippy, and the `wasm32-unknown-unknown` target, plus
+  `wasm-bindgen`, `wasm-opt`, and `miniserve` for the browser build, as pinned in
+  [.mise/config.toml](.mise/config.toml).
   Without mise, install Rust 1.97.1 or newer (edition 2024) with rustup.
 - Bevy 0.20.1 and bevy_rapier2d 0.37, downloaded automatically by Cargo.
   `Cargo.lock` pins dependencies.
@@ -132,6 +147,8 @@ mise run run     # build and start the game
 mise run test    # headless tests
 mise run build   # debug build; `mise run build --release` for release
 mise run check   # format, Clippy, build, and tests before a PR
+mise run web:build  # browser build into dist/web
+mise run web:serve  # browser build, served on http://127.0.0.1:8080
 mise tasks       # list every task
 ```
 

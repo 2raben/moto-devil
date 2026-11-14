@@ -105,7 +105,7 @@ pub enum MenuAction {
     Down,
     /// Enter: choose the player, or go on after the finish.
     Confirm,
-    /// Escape: back to the player selection, or quit from there.
+    /// Escape: back to the player selection, or quit from there (see [`CAN_QUIT`]).
     Back,
     /// A typed character for a new name.
     Type(char),
@@ -114,6 +114,10 @@ pub enum MenuAction {
     /// Tab on the player selection: open the key settings.
     Settings,
 }
+
+/// Whether Escape on the player selection quits. In the browser, quitting would
+/// only freeze the page, so the player closes the tab instead.
+pub const CAN_QUIT: bool = cfg!(not(target_arch = "wasm32"));
 
 /// Menu keys since the flow last looked, oldest first.
 #[derive(Resource, Clone, Debug, Default)]
@@ -178,7 +182,9 @@ pub fn select_player(
                 return;
             }
             MenuAction::Back => {
-                exit.write(AppExit::Success);
+                if CAN_QUIT {
+                    exit.write(AppExit::Success);
+                }
                 return;
             }
         }

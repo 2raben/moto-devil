@@ -4,7 +4,7 @@
 
 use bevy::prelude::*;
 
-use crate::flow::{Levels, Screen, Selection};
+use crate::flow::{CAN_QUIT, Levels, Screen, Selection};
 use crate::hud::{colored_text, text};
 use crate::progress::Profiles;
 use crate::visuals::palette;
@@ -56,7 +56,11 @@ fn spawn_menu(mut commands: Commands) {
                 },
             ),
             colored_text(
-                "↑/↓ wählen   Enter fahren   Buchstaben tippen = neuer Name   Tab Tasten   Esc beenden",
+                if CAN_QUIT {
+                    "↑/↓ wählen   Enter fahren   Buchstaben tippen = neuer Name   Tab Tasten   Esc beenden"
+                } else {
+                    "↑/↓ wählen   Enter fahren   Buchstaben tippen = neuer Name   Tab Tasten"
+                },
                 15.0,
                 palette::MUTED,
             ),
